@@ -70,6 +70,9 @@
 }
 .ws-main .sc-list { flex: 1 1 auto; min-height: 0; height: auto; max-height: none; overflow-y: auto; overscroll-behavior: contain; }
 .ws-main .sc-composer, .ws-main .sc-note { flex: none; }
+/* A compact reply box leaves more room for the messages. */
+.ws-main .sc-composer { padding: 8px 10px; gap: 6px; }
+.ws-main .sc-composer textarea { min-height: 44px; max-height: 120px; }
 .ws-main .sc-head { flex: none; }
 .ws-head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none; }
 .ws-back {
