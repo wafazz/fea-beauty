@@ -118,7 +118,7 @@ final class SupportTicketController extends Controller
     {
         $ticket = $this->mine($ticketNo);
         $file = SupportAttachmentService::find((int) $ticket['id'], (int) $id) ?? Response::abort(404);
-        SupportAttachmentService::serve($file);
+        SupportAttachmentService::serve($file, $request->str('view') === '1');
     }
 
     private function me(): int

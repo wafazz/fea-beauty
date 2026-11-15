@@ -138,16 +138,17 @@ final class SupportAttachmentService
     }
 
     /**
-     * Send the file to the browser. Images show inline; PDFs download. Callers must have checked the ticket first.
+     * Send the file to the browser. Images show inline. A PDF downloads, unless $viewInline is set (the chat's viewer
+     * shows it in a popup). Callers must have checked the ticket first.
      * @return never
      */
-    public static function serve(array $row): never
+    public static function serve(array $row, bool $viewInline = false): never
     {
         $path = self::path($row);
         if (!is_file($path)) {
             \App\Core\Response::abort(404);
         }
-        $inline = str_starts_with((string) $row['mime'], 'image/');
+        $inline = str_starts_with((string) $row['mime'], 'image/') || $viewInline;
         header('Content-Type: ' . $row['mime']);
         header('Content-Length: ' . (string) filesize($path));
         $name = self::safeName((string) $row['original_name']);

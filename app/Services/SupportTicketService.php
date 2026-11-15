@@ -107,8 +107,10 @@ final class SupportTicketService
             $reopen = true;
         }
         $body = trim($body);
-        if ($body === '' || mb_strlen($body) > SupportService::MAX_CHARS) {
-            return 'Write a message of up to ' . SupportService::MAX_CHARS . ' characters.';
+        if (($body === '' && $files === []) || mb_strlen($body) > SupportService::MAX_CHARS) {
+            return $body === ''
+                ? 'Write a message or attach a file.'
+                : 'Write a message of up to ' . SupportService::MAX_CHARS . ' characters.';
         }
         $pdo = Database::connection();
         $pdo->beginTransaction();

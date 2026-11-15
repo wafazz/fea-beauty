@@ -141,7 +141,7 @@ final class SupportInboxController extends Controller
     {
         $ticket = $this->ticket($ticketNo);
         $file = SupportAttachmentService::find((int) $ticket['id'], (int) $id) ?? Response::abort(404);
-        SupportAttachmentService::serve($file);
+        SupportAttachmentService::serve($file, $request->str('view') === '1');
     }
 
     private function render(?array $active, Request $request): void
