@@ -3,15 +3,77 @@
 (function () {
   'use strict';
 
+  // Attachment viewer: one popup shared by the chat. Images show as images; PDFs show in the popup.
+  // A download button keeps the file one click away. (Ctrl/Cmd-click still opens a new tab.)
+  var viewer = null;
+  function openViewer(url, name, isImage) {
+    if (!viewer) {
+      viewer = document.createElement('dialog');
+      viewer.className = 'ws-viewer';
+      viewer.setAttribute('aria-label', 'Attachment');
+      var head = document.createElement('div');
+      head.className = 'ws-viewer-head';
+      var title = document.createElement('strong');
+      title.setAttribute('data-viewer-title', '');
+      var actions = document.createElement('div');
+      actions.className = 'ws-viewer-actions';
+      var dl = document.createElement('a');
+      dl.textContent = 'Download';
+      dl.setAttribute('data-viewer-download', '');
+      dl.setAttribute('download', '');
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.textContent = 'Close';
+      close.addEventListener('click', function () { viewer.close(); });
+      actions.appendChild(dl);
+      actions.appendChild(close);
+      head.appendChild(title);
+      head.appendChild(actions);
+      var body = document.createElement('div');
+      body.className = 'ws-dialog-body';
+      body.setAttribute('data-viewer-body', '');
+      viewer.appendChild(head);
+      viewer.appendChild(body);
+      viewer.addEventListener('close', function () { body.innerHTML = ''; }); // stops a PDF still loading
+      document.body.appendChild(viewer);
+    }
+    var sep = url.indexOf('?') === -1 ? '?' : '&';
+    viewer.querySelector('[data-viewer-title]').textContent = name;
+    viewer.querySelector('[data-viewer-download]').setAttribute('href', url);
+    var body = viewer.querySelector('[data-viewer-body]');
+    body.innerHTML = '';
+    var stage = document.createElement('div');
+    stage.className = 'ws-viewer-stage';
+    if (isImage) {
+      var img = document.createElement('img');
+      img.src = url + sep + 'view=1';
+      img.alt = name;
+      stage.appendChild(img);
+    } else {
+      var frame = document.createElement('iframe');
+      frame.src = url + sep + 'view=1';
+      frame.title = name;
+      stage.appendChild(frame);
+    }
+    body.appendChild(stage);
+    viewer.showModal();
+  }
+
   // Popups: a button with data-details-open opens the dialog with that id; a click on the dark backdrop closes it.
   document.addEventListener('click', function (e) {
+    var att = e.target.closest ? e.target.closest('[data-attach-view]') : null;
+    if (att && !(e.ctrlKey || e.metaKey || e.shiftKey)) {
+      e.preventDefault();
+      openViewer(att.getAttribute('href'), att.getAttribute('data-attach-view'), !!att.querySelector('img'));
+      return;
+    }
     var open = e.target.closest ? e.target.closest('[data-details-open]') : null;
     if (open) {
       var dlg = document.getElementById(open.getAttribute('data-details-open'));
       if (dlg && dlg.showModal) dlg.showModal();
       return;
     }
-    if (e.target.tagName === 'DIALOG' && e.target.classList.contains('ws-dialog')) e.target.close();
+    if (e.target.tagName === 'DIALOG' && (e.target.classList.contains('ws-dialog') || e.target.classList.contains('ws-viewer'))) e.target.close();
   });
 
   var root = document.querySelector('[data-chat]');
@@ -75,11 +137,11 @@
     (m.attachments || []).forEach(function (a) {
       var url = attachBase.replace('__ID__', String(a.id));
       if (String(a.mime).indexOf('image/') === 0) {
-        var link = el('a'); link.href = url; link.target = '_blank'; link.rel = 'noopener';
+        var link = el('a'); link.href = url; link.setAttribute('data-attach-view', a.original_name);
         var img = el('img', 'sc-img'); img.src = url; img.alt = a.original_name; link.appendChild(img);
         b.appendChild(link);
       } else {
-        var f = el('a', 'sc-file', 'Attachment: ' + a.original_name); f.href = url; b.appendChild(f);
+        var f = el('a', 'sc-file', 'Attachment: ' + a.original_name); f.href = url; f.setAttribute('data-attach-view', a.original_name); b.appendChild(f);
       }
     });
     if (m.body) b.appendChild(el('div', 'sc-text', m.body));

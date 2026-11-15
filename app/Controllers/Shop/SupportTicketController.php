@@ -127,7 +127,7 @@ final class SupportTicketController extends Controller
     {
         $ticket = $this->guest($ticketNo, $token);
         $file = SupportAttachmentService::find((int) $ticket['id'], (int) $id) ?? Response::abort(404);
-        SupportAttachmentService::serve($file);
+        SupportAttachmentService::serve($file, $request->str('view') === '1');
     }
 
     /** The ticket if the number and token both match; otherwise a plain 404. */

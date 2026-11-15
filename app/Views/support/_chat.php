@@ -53,6 +53,17 @@ $showReply = $staffView ? true : $canReply;
   .sc-note { padding: 10px 14px; font-size: .85rem; color: var(--sc-muted); background: var(--sc-shop); border-top: 1px solid var(--sc-line); }
   .sc-resolve { background: none; border: 1px solid var(--sc-line); border-radius: 8px; padding: 6px 10px; color: inherit; cursor: pointer; min-height: 36px; }
   .sc-send[disabled] { opacity: .6; cursor: progress; }
+  /* Attachment viewer popup: images and PDFs open here instead of a new tab. */
+  .ws-viewer { border: 0; border-radius: 16px; padding: 0; background: #fff; color: #111827; box-shadow: 0 20px 60px rgba(0, 0, 0, .35); width: min(960px, calc(100vw - 24px)); height: min(88vh, 900px); max-height: none; display: flex; flex-direction: column; }
+  .ws-viewer::backdrop { background: rgba(15, 23, 42, .6); }
+  .ws-viewer-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #e5e7eb; }
+  .ws-viewer-head strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: .95rem; }
+  .ws-viewer .ws-dialog-body { flex: 1; min-height: 0; max-height: none; padding: 0; overflow: hidden; display: flex; background: #111827; }
+  .ws-viewer-stage { flex: 1; min-width: 0; min-height: 0; display: grid; place-items: center; background: #111827; }
+  .ws-viewer-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .ws-viewer-stage iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+  .ws-viewer-actions { display: flex; gap: 8px; align-items: center; }
+  .ws-viewer-actions a, .ws-viewer-actions button { min-height: 36px; padding: 6px 12px; border-radius: 10px; border: 1px solid #d1d5db; background: #fff; color: #111827; text-decoration: none; font: inherit; font-size: .85rem; cursor: pointer; }
   .sc-live { display: inline-flex; align-items: center; gap: 6px; font-size: .75rem; color: var(--sc-muted); }
   .sc-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #12b76a; }
   .sc-live.is-off::before { background: #98a2b3; }
@@ -100,9 +111,9 @@ $showReply = $staffView ? true : $canReply;
                     <?php if (!$mine && $who !== ''): ?><div class="sc-pill sc-who"><?= e($who) ?></div><?php endif; ?>
                     <?php foreach (($m['attachments'] ?? []) as $a): $url = str_replace('__ID__', (string) $a['id'], $urls['attach']); ?>
                         <?php if (str_starts_with((string) $a['mime'], 'image/')): ?>
-                            <a href="<?= e($url) ?>" target="_blank" rel="noopener"><img class="sc-img" src="<?= e($url) ?>" alt="<?= e($a['original_name']) ?>"></a>
+                            <a href="<?= e($url) ?>" data-attach-view="<?= e($a['original_name']) ?>"><img class="sc-img" src="<?= e($url) ?>" alt="<?= e($a['original_name']) ?>"></a>
                         <?php else: ?>
-                            <a class="sc-file" href="<?= e($url) ?>">Attachment: <?= e($a['original_name']) ?></a>
+                            <a class="sc-file" href="<?= e($url) ?>" data-attach-view="<?= e($a['original_name']) ?>">Attachment: <?= e($a['original_name']) ?></a>
                         <?php endif; ?>
                     <?php endforeach; ?>
                     <?php if ((string) $m['body'] !== ''): ?><div class="sc-text"><?= nl2br(e((string) $m['body'])) ?></div><?php endif; ?>
