@@ -234,6 +234,9 @@ $siteLogo = \App\Services\SiteLogo::url(); // the logo replaces the shop name wh
 </div>
 <?php require BASE_PATH . '/app/Views/partials/invoice_modal.php'; ?>
 <script src="<?= e(asset('js/invoice-modal.js')) ?>" defer></script>
+<?php if ($supportTicketsMenu && ($role === 'member' || $isAdminRole || $role === 'staff')): ?>
+<script src="<?= e(asset('js/support-alerts.js')) ?>" defer data-role="<?= e($role === 'member' ? 'member' : 'inbox') ?>" data-counts="<?= e(url($role === 'member' ? '/member/support/counts' : ($role === 'staff' ? '/staff/tickets/counts' : '/admin/tickets/counts'))) ?>" data-link="<?= e(url($role === 'member' ? '/member/support' : ($role === 'staff' ? '/staff/tickets' : '/admin/tickets'))) ?>"></script>
+<?php endif; ?>
 </body>
 </html>
 <?php flash_clear(); ?>

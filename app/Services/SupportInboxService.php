@@ -91,6 +91,16 @@ final class SupportInboxService
         return $t;
     }
 
+    /** The newest message a customer has written, for live alerts: its id and ticket number, or null. */
+    public static function latestCustomerMessage(): ?array
+    {
+        $row = Database::query(
+            "SELECT m.id, t.ticket_no FROM support_messages m JOIN support_tickets t ON t.id = m.ticket_id
+             WHERE m.sender = 'customer' ORDER BY m.id DESC LIMIT 1"
+        )->fetch();
+        return $row ? ['id' => (int) $row['id'], 'ticket_no' => (string) $row['ticket_no']] : null;
+    }
+
     /** Tickets where the customer wrote last and nobody has answered yet: the sidebar badge. */
     public static function needsReplyCount(): int
     {

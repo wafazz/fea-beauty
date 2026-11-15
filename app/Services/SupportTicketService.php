@@ -139,6 +139,17 @@ final class SupportTicketService
         return null;
     }
 
+    /** The newest public reply from the shop on one of this member's tickets, for live alerts: id and ticket number, or null. */
+    public static function latestStaffReplyFor(int $userId): ?array
+    {
+        $row = Database::query(
+            "SELECT m.id, t.ticket_no FROM support_messages m JOIN support_tickets t ON t.id = m.ticket_id
+             WHERE t.user_id = ? AND m.sender = 'staff' AND m.visibility = 'public' ORDER BY m.id DESC LIMIT 1",
+            [$userId]
+        )->fetch();
+        return $row ? ['id' => (int) $row['id'], 'ticket_no' => (string) $row['ticket_no']] : null;
+    }
+
     /** How many of a member's tickets have a reply they have not read yet. */
     public static function unreadCountForMember(int $userId): int
     {

@@ -20,6 +20,19 @@ final class SupportTicketController extends Controller
         $this->workspace(null);
     }
 
+    /** Live badge and alerts for the member: unread replies, and the newest reply from the shop (JSON). */
+    public function counts(Request $request): void
+    {
+        $uid = $this->me();
+        $latest = SupportTicketService::latestStaffReplyFor($uid);
+        Response::json([
+            'count' => SupportTicketService::unreadCountForMember($uid),
+            'latest_id' => $latest['id'] ?? 0,
+            'latest_url' => $latest ? url('/member/support/' . $latest['ticket_no']) : null,
+            'latest_title' => 'New reply from the shop',
+        ]);
+    }
+
     public function create(Request $request): void
     {
         $this->view('member/support/new', [

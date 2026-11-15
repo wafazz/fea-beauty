@@ -405,6 +405,7 @@ return function (Router $r): void {
         $inbox = function (Router $r): void {
             $r->get('/tickets', 'Manage/SupportInboxController@index', ['module:support']);
             $r->post('/tickets/bulk', 'Manage/SupportInboxController@bulk', ['module:support']);
+            $r->get('/tickets/counts', 'Manage/SupportInboxController@counts', ['module:support']);
             $r->get('/tickets/{ticketNo}', 'Manage/SupportInboxController@show', ['module:support']);
             $r->post('/tickets/{ticketNo}/reply', 'Manage/SupportInboxController@reply', ['module:support']);
             $r->post('/tickets/{ticketNo}/note', 'Manage/SupportInboxController@note', ['module:support']);
@@ -452,6 +453,7 @@ return function (Router $r): void {
             $r->get('/support', 'Member/SupportTicketController@index', ['module:support']);
             $r->get('/support/new', 'Member/SupportTicketController@create', ['module:support']);
             $r->post('/support', 'Member/SupportTicketController@store', ['module:support']);
+            $r->get('/support/counts', 'Member/SupportTicketController@counts', ['module:support']);
             $r->get('/support/{ticketNo}', 'Member/SupportTicketController@show', ['module:support']);
             $r->post('/support/{ticketNo}/messages', 'Member/SupportTicketController@reply', ['module:support']);
             $r->post('/support/{ticketNo}/resolve', 'Member/SupportTicketController@resolve', ['module:support']);
