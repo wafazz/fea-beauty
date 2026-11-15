@@ -132,7 +132,7 @@ $productId = (int) ($product['id'] ?? 0);
         <p class="margin-preview" id="margin-preview" aria-live="polite"></p>
     </fieldset>
 
-    <?php if ($isAdmin): ?>
+    <?php if ($isAdmin && \App\Services\Modules::enabled('affiliates')): ?>
         <label>Affiliate commission override (% of sales after shipping, blank = default)
             <input name="commission_rate" inputmode="decimal" value="<?= old('commission_rate', (string) ($product['commission_rate'] ?? '')) ?>"><?= field_error('commission_rate') ?></label>
     <?php endif; ?>
