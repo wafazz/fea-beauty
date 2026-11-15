@@ -401,6 +401,23 @@ return function (Router $r): void {
             $r->get('/newsletter/export', 'Admin/NewsletterController@export', ['module:newsletter']);
         });
 
+        // Support inbox (admins and staff). Admins can also change urgency: the controller checks it.
+        $inbox = function (Router $r): void {
+            $r->get('/tickets', 'Manage/SupportInboxController@index', ['module:support']);
+            $r->post('/tickets/bulk', 'Manage/SupportInboxController@bulk', ['module:support']);
+            $r->get('/tickets/{ticketNo}', 'Manage/SupportInboxController@show', ['module:support']);
+            $r->post('/tickets/{ticketNo}/reply', 'Manage/SupportInboxController@reply', ['module:support']);
+            $r->post('/tickets/{ticketNo}/note', 'Manage/SupportInboxController@note', ['module:support']);
+            $r->post('/tickets/{ticketNo}/assign', 'Manage/SupportInboxController@assign', ['module:support']);
+            $r->post('/tickets/{ticketNo}/status', 'Manage/SupportInboxController@status', ['module:support']);
+            $r->post('/tickets/{ticketNo}/urgency', 'Manage/SupportInboxController@urgency', ['module:support']);
+            $r->post('/tickets/{ticketNo}/labels', 'Manage/SupportInboxController@labels', ['module:support']);
+            $r->get('/tickets/{ticketNo}/messages', 'Manage/SupportInboxController@poll', ['module:support']);
+            $r->get('/tickets/{ticketNo}/attachments/{id}', 'Manage/SupportInboxController@attachment', ['module:support']);
+        };
+        $r->group('/admin', ['auth:admin'], $inbox);
+        $r->group('/staff', ['auth:staff'], $inbox);
+
         // Staff portal
         $r->group('/staff', ['auth:staff'], function (Router $r): void {
             $r->get('/', 'Staff/DashboardController@index');
