@@ -123,6 +123,7 @@ $defaultMethod = isset($methods['cod']) ? 'cod' : (string) array_key_first($meth
             </li>
         <?php endforeach; ?>
     </ul>
+    <?php if (\App\Services\Modules::enabled('vouchers')): ?>
     <?php if ($voucher !== null): ?>
         <form method="post" action="<?= e(url('/checkout/voucher/remove')) ?>" class="co-voucher">
             <?= csrf_field() ?>
@@ -139,6 +140,7 @@ $defaultMethod = isset($methods['cod']) ? 'cod' : (string) array_key_first($meth
         </form>
     <?php endif; ?>
     <?php if ($voucher_note): ?><p class="alert bad"><?= e($voucher_note) ?></p><?php endif; ?>
+    <?php endif; // vouchers ?>
     <p class="sum-row"><span>Subtotal</span><span><?= e(money($cart['subtotal_cents'] / 100)) ?></span></p>
     <?php if (\App\Services\Modules::enabled('gift_cards')): ?>
         <div class="co-gift">
