@@ -171,6 +171,22 @@
     return null;
   }
 
+  // The server sometimes answers with an error page instead of a message (for example when the web server refuses
+  // an upload that is too big). Say what most likely happened, so the customer knows what to do.
+  function failureText(status, hadFiles) {
+    if (status === 413) {
+      return 'The server refused the upload because it is too big. Try smaller photos (about 1 MB each), or ask the shop to raise the upload limit.';
+    }
+    if (status === 419) {
+      return hadFiles
+        ? 'The send failed. The files may be too big for the server, or your session expired. Try smaller files, or reload the page.'
+        : 'Your session has expired. Reload the page and try again.';
+    }
+    if (status >= 500) return 'The server had a problem. Please try again in a moment.';
+    if (status === 0) return 'No connection. Your message is still in the box; try again.';
+    return 'Could not send (error ' + status + '). Please try again.';
+  }
+
   function clearFiles() {
     if (files) files.value = '';
     if (fileList) fileList.innerHTML = '';
@@ -205,9 +221,7 @@
         setFeedback(res.json.message || 'Sent.', false);
         return poll(); // shows our own message straight away
       }
-      var msg = (res.json && res.json.message) || (res.status === 419
-        ? 'Your session has expired. Reload the page and try again.'
-        : 'Could not send. Please try again.');
+      var msg = (res.json && res.json.message) || failureText(res.status, count > 0);
       setFeedback(msg, true);
     }).catch(function () {
       setFeedback('No connection. Your message is still in the box; try again.', true);
