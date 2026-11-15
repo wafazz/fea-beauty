@@ -216,6 +216,9 @@ final class EmailService
         $kind = (string) ($p['kind'] ?? 'campaign');
         $campaign = (int) ($p['campaign_id'] ?? 0);
         $voucherId = isset($p['voucher_id']) ? (int) $p['voucher_id'] : null;
+        if ($voucherId !== null && !Modules::enabled('vouchers')) {
+            return true; // vouchers switched off: stop sending voucher emails, including queued retries
+        }
         $round = (int) ($p['round'] ?? 0);
         $items = (array) ($p['items'] ?? []);
         if ($voucherId !== null) {
