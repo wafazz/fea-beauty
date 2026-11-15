@@ -313,6 +313,11 @@ return function (Router $r): void {
             $r->get('/support', 'Admin/SupportController@index', ['module:support']);
             $r->get('/support/{orderId}', 'Admin/SupportController@show', ['module:support']);
             $r->post('/support/{orderId}', 'Admin/SupportController@reply', ['module:support']);
+            $r->get('/support-settings', 'Admin/SupportSettingsController@index', ['module:support']);
+            $r->post('/support-settings/categories', 'Admin/SupportSettingsController@saveCategory', ['module:support']);
+            $r->post('/support-settings/categories/{id}', 'Admin/SupportSettingsController@saveCategory', ['module:support']);
+            $r->post('/support-settings/labels', 'Admin/SupportSettingsController@saveLabel', ['module:support']);
+            $r->post('/support-settings/labels/{id}', 'Admin/SupportSettingsController@saveLabel', ['module:support']);
         });
 
         // Returns and refunds (admin and superadmin)
