@@ -35,6 +35,8 @@ $unassignedCount = count(array_filter($tickets, fn($t) => $t['assignee_id'] === 
     .msg-page:has(.ws[data-active="1"]) > .inbox-filters { display: none; }
     .ws[data-active="1"] > .ws-main { height: calc(100dvh - 90px); min-height: 420px; }
   }
+  /* The message area is a fixed 300 px; it scrolls on its own, and the reply box stays below it. */
+  .ws-main .sc-list { flex: none; height: 300px; max-height: 300px; min-height: 0; }
   .inbox-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 12px; }
   .inbox-filters label { display: grid; gap: 4px; font-size: .8rem; }
     .inbox-bulk { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px; border-bottom: 1px solid var(--line, #d1d7db); }
