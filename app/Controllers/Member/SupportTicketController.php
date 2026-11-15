@@ -17,10 +17,7 @@ final class SupportTicketController extends Controller
 {
     public function index(Request $request): void
     {
-        $this->view('member/support/index', [
-            'title' => 'Support',
-            'tickets' => SupportTicketService::listForMember($this->me()),
-        ], 'portal');
+        $this->workspace(null);
     }
 
     public function create(Request $request): void
@@ -57,10 +54,17 @@ final class SupportTicketController extends Controller
         $ticket = $this->mine($ticketNo);
         SupportTicketService::markRead($ticket);
         header('Cache-Control: no-store');
-        $this->view('member/support/show', [
-            'title' => 'Ticket ' . $ticket['ticket_no'],
-            'ticket' => $ticket,
-            'messages' => SupportTicketService::messagesAfter((int) $ticket['id']),
+        $this->workspace($ticket);
+    }
+
+    /** The list and the chat side by side (one panel at a time on phones). $active is the open ticket, or null. */
+    private function workspace(?array $active): void
+    {
+        $this->view('member/support/workspace', [
+            'title' => $active ? 'Ticket ' . $active['ticket_no'] : 'Support',
+            'tickets' => SupportTicketService::listForMember($this->me()),
+            'active' => $active,
+            'messages' => $active ? SupportTicketService::messagesAfter((int) $active['id']) : [],
         ], 'portal');
     }
 

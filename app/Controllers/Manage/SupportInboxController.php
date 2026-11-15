@@ -157,6 +157,7 @@ final class SupportInboxController extends Controller
             'tickets' => SupportInboxService::list($filters, $this->me()),
             'active' => $active,
             'isAdmin' => $this->isAdmin(),
+            'meId' => $this->me(),
             'urgencies' => SupportTicketService::URGENCIES,
             'statuses' => SupportInboxService::STATUSES,
             'categories' => SupportTaxonomy::categories(),
