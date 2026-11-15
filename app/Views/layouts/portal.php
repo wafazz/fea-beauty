@@ -47,7 +47,7 @@ $groups = match ($role) {
         'Overview' => [['/admin', 'Dashboard', 'home', 0]],
         'Catalog' => [['/admin/products', 'Products', 'box', 0], ...($bundlesMenu ? [['/admin/bundles', 'Bundles', 'box', 0]] : []), ...($bulkMenu ? [['/admin/bulk-pricing', 'Bulk prices', 'coin', 0]] : []), ...($csvMenu ? [['/admin/products/csv', 'Import / export', 'box', 0]] : []), ['/admin/categories', 'Categories', 'tag', 0], ['/admin/brands', 'Brands', 'tag', 0], ...($flashMenu ? [['/admin/flash-sales', 'Flash sales', 'coin', 0]] : []), ['/admin/reviews', 'Reviews', 'heart', 0]],
         'Inventory' => [['/admin/stock', 'Stock Control', 'stack', 0], ...($movementMenu ? [['/admin/stock/movements', 'Stock Movement', 'swap', 0]] : []), ...($countsMenu ? [['/admin/stock-counts', 'Stock counts', 'stack', 0]] : []), ...($preorderMenu ? [['/admin/preorders', 'Pre-orders', 'box', 0]] : []), ...($poMenu ? [['/admin/purchase-orders', 'Purchase orders', 'truck', 0]] : [])],
-        'Sales' => [['/admin/orders', 'Orders', 'cart', $pendingOrders, $orderSub('/admin')], ...($reportsMenu ? [['/admin/reports', 'Sales reports', 'coin', 0]] : []), ...($taxMenu ? [['/admin/tax', 'SST', 'coin', 0]] : []), ...($accountingMenu ? [['/admin/accounting', 'Accounting export', 'coin', 0]] : []), ...($returnsMenu ? [['/admin/returns', 'Returns', 'swap', 0]] : []), ...($supportMenu ? [['/admin/support', 'Order messages', 'heart', 0]] : []), ...($giftMenu ? [['/admin/gift-cards', 'Gift cards', 'coin', 0]] : []), ...($affiliatesOn ? [['/admin/affiliates', 'Affiliates', 'link', 0], ['/admin/commissions', 'Commissions', 'coin', $pendingCommissions], ['/admin/withdrawals', 'Withdrawals', 'coin', 0]] : []), ...($vouchersMenu ? [['/admin/vouchers', 'Vouchers', 'coin', 0]] : [])],
+        'Sales' => [['/admin/orders', 'Orders', 'cart', $pendingOrders, $orderSub('/admin')], ...($supportTicketsMenu ? [['/admin/tickets', 'Support tickets', 'shield', 0]] : []), ...($reportsMenu ? [['/admin/reports', 'Sales reports', 'coin', 0]] : []), ...($taxMenu ? [['/admin/tax', 'SST', 'coin', 0]] : []), ...($accountingMenu ? [['/admin/accounting', 'Accounting export', 'coin', 0]] : []), ...($returnsMenu ? [['/admin/returns', 'Returns', 'swap', 0]] : []), ...($supportMenu ? [['/admin/support', 'Order messages', 'heart', 0]] : []), ...($giftMenu ? [['/admin/gift-cards', 'Gift cards', 'coin', 0]] : []), ...($affiliatesOn ? [['/admin/affiliates', 'Affiliates', 'link', 0], ['/admin/commissions', 'Commissions', 'coin', $pendingCommissions], ['/admin/withdrawals', 'Withdrawals', 'coin', 0]] : []), ...($vouchersMenu ? [['/admin/vouchers', 'Vouchers', 'coin', 0]] : [])],
         'Administration' => [['/admin/staff', 'Staff', 'users', 0], ...($newsletterMenu ? [['/admin/newsletter', 'Newsletter', 'heart', 0]] : []), ['/admin/visitors', 'Visitors', 'pin', 0], ['/admin/shipping-rates', 'Shipping rates', 'truck', 0], ['/admin/invoice', 'Invoice details', 'stack', 0], ['/admin/billing', 'Buy Add-On Module', 'card', 0], ['/admin/backup', 'Backup', 'lock', 0], ['/admin/email/announce', 'Announcements', 'heart', 0], ['/admin/payments', 'Payments', 'card', 0], ['/admin/api', 'API Management', 'link', 0, [['/admin/whatsapp', 'WhatsApp', '', 0], ['/admin/email', 'Email', '', 0], ['/admin/payments/billplz', 'Billplz', '', 0], ['/admin/shipping/ninjavan', 'NinjaVan', '', 0], ['/admin/shipping/jnt-express', 'J&T Express', '', 0]]], ['/admin/settings', 'Settings', 'gear', 0]],
         'Account' => [['/admin/profile', 'Profile', 'user', 0], ['/admin/password', 'Password', 'lock', 0]],
     ] + ($role === 'superadmin' ? [
@@ -57,7 +57,7 @@ $groups = match ($role) {
         'Overview' => [['/staff', 'Dashboard', 'home', 0]],
         'Catalog' => Auth::can('products.manage') ? [['/staff/products', 'Products', 'box', 0], ['/staff/categories', 'Categories', 'tag', 0], ['/staff/brands', 'Brands', 'tag', 0], ...($flashMenu ? [['/staff/flash-sales', 'Flash sales', 'coin', 0]] : []), ['/staff/reviews', 'Reviews', 'heart', 0]] : [],
         'Inventory' => Auth::can('stock.manage') ? [['/staff/stock', 'Stock Control', 'stack', 0], ...($movementMenu ? [['/staff/stock/movements', 'Stock Movement', 'swap', 0]] : [])] : [],
-        'Sales' => Auth::can('orders.view') ? [['/staff/orders', 'Orders', 'cart', $pendingOrders, $orderSub('/staff')]] : [],
+        'Sales' => array_merge(Auth::can('orders.view') ? [['/staff/orders', 'Orders', 'cart', $pendingOrders, $orderSub('/staff')]] : [], $supportTicketsMenu ? [['/staff/tickets', 'Support tickets', 'shield', 0]] : []),
         'Administration' => array_merge(
             Auth::can('payments.manage') ? [['/staff/payments', 'Payments', 'card', 0]] : [],
             (Auth::can('payments.manage') || Auth::can('shipping.manage')) ? [['/staff/api', 'API Management', 'link', 0, array_merge(
@@ -69,7 +69,7 @@ $groups = match ($role) {
     ]),
     default => [
         'Overview' => [['/member', 'Overview', 'home', 0]],
-        'Shopping' => [['/member/orders', 'Orders', 'cart', 0], ['/member/wishlist', 'Wishlist', 'heart', 0], ['/member/addresses', 'Addresses', 'pin', 0]] + ($subscriptionsMenu ? [['/member/subscriptions', 'Subscriptions', 'truck', 0]] : []) + ($supportTicketsMenu ? [['/member/support', 'Support', 'shield', 0]] : []),
+        'Shopping' => array_merge([['/member/orders', 'Orders', 'cart', 0], ['/member/wishlist', 'Wishlist', 'heart', 0], ['/member/addresses', 'Addresses', 'pin', 0]], $subscriptionsMenu ? [['/member/subscriptions', 'Subscriptions', 'truck', 0]] : [], $supportTicketsMenu ? [['/member/support', 'Support', 'shield', 0]] : []),
         'Earn' => $affiliatesOn ? [['/member/affiliate', 'Affiliate', 'link', 0]] : [],
         'Account' => [['/member/profile', 'Profile', 'user', 0], ['/member/password', 'Password', 'lock', 0]],
     ],
@@ -120,6 +120,7 @@ $icons = [
     'chev' => '<path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>',
     'out' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>',
     'shop' => '<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/>',
+    'shield' => '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
 ];
 $svg = fn(string $name, string $class = 'ico') => '<svg class="' . $class . '" viewBox="0 0 24 24" aria-hidden="true">' . $icons[$name] . '</svg>';
 $appName = (string) config('app.name');

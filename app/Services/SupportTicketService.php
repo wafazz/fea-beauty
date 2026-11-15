@@ -197,13 +197,21 @@ final class SupportTicketService
      * Internal notes are never returned to customers.
      * @return array<int, array<string, mixed>>
      */
-    public static function messagesAfter(int $ticketId, int $afterId = 0): array
+    public static function messagesAfter(int $ticketId, int $afterId = 0, bool $forStaff = false): array
     {
-        $rows = Database::query(
-            "SELECT m.id, m.sender, m.body, m.created_at FROM support_messages m
-             WHERE m.ticket_id = ? AND m.visibility = 'public' AND m.id > ? ORDER BY m.id LIMIT 200",
-            [$ticketId, $afterId]
-        )->fetchAll();
+        // Staff also get internal notes and the name of the staff member who wrote each reply. Customers get neither.
+        $rows = $forStaff
+            ? Database::query(
+                "SELECT m.id, m.sender, m.visibility, m.body, m.created_at, u.name AS staff_name FROM support_messages m
+                 LEFT JOIN users u ON u.id = m.staff_id
+                 WHERE m.ticket_id = ? AND m.id > ? ORDER BY m.id LIMIT 200",
+                [$ticketId, $afterId]
+            )->fetchAll()
+            : Database::query(
+                "SELECT m.id, m.sender, m.body, m.created_at FROM support_messages m
+                 WHERE m.ticket_id = ? AND m.visibility = 'public' AND m.id > ? ORDER BY m.id LIMIT 200",
+                [$ticketId, $afterId]
+            )->fetchAll();
         $files = SupportAttachmentService::forMessages(array_column($rows, 'id'));
         foreach ($rows as &$r) {
             $r['attachments'] = $files[(int) $r['id']] ?? [];
