@@ -36,7 +36,12 @@ $unassignedCount = count(array_filter($tickets, fn($t) => $t['assignee_id'] === 
     .ws[data-active="1"] > .ws-main { height: calc(100dvh - 90px); min-height: 420px; }
   }
   /* The message area is a fixed 300 px; it scrolls on its own, and the reply box stays below it. */
-  .ws-main .sc-list { flex: none; height: 300px; max-height: 300px; min-height: 0; }
+  /* Flexible message area: up to 300 px on a large screen, smaller on a small one. The reply box always stays
+     inside the panel, at its bottom edge. */
+  .ws-main .sc { min-height: 0; overflow: hidden; }
+  .ws-main .sc-list { flex: 1 1 0; height: auto; min-height: 140px; max-height: 300px; }
+  .ws-main .sc-composer { margin-top: auto; }
+  .ws-main .sc-note { margin-top: auto; }
   .inbox-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 12px; }
   /* Filters live in the list column (collapsible), so the chat starts higher on the page. */
   .ws-filters { border-bottom: 1px solid var(--line, #d1d7db); }
