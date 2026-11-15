@@ -1,0 +1,13 @@
+# Support ticket attachments: up to 3 files per message, 5 MB each (about 15 MB per message).
+# Without these settings nginx refuses a phone photo bigger than 1 MB with an error page,
+# and the chat shows a "too big" message instead of the reply.
+#
+# 1. nginx: add inside the server { } block for the shop (then: sudo nginx -t && sudo systemctl reload nginx)
+client_max_body_size 16m;
+#
+# 2. PHP: set in php.ini (or the PHP-FPM pool), then restart PHP-FPM
+#    upload_max_filesize = 6M
+#    post_max_size = 16M
+#    max_file_uploads = 10
+#
+# Check with: php -i | grep -E "upload_max_filesize|post_max_size"
