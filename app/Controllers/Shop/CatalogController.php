@@ -99,6 +99,7 @@ final class CatalogController extends Controller
 
         $me = Auth::user();
         $images = Product::images($pid);
+        $base = PricingService::effective($product);
         $this->view('shop/product', [
             'wish' => $me !== null && $me['role'] === 'member' ? WishlistService::has((int) $me['id'], $pid) : null, // null = not a member
             'reviews' => \App\Services\ReviewService::list($pid),
@@ -108,7 +109,7 @@ final class CatalogController extends Controller
             'product' => $product,
             'images' => $images,
             'variants' => $variants,
-            'base' => PricingService::effective($product),
+            'base' => $base,
             'inStock' => $variants === [] ? $this->singleStock($product) > 0 : array_sum(array_column($variants, 'stock')) > 0,
             'related' => Product::related($pid, $product['category_id'] !== null ? (int) $product['category_id'] : null, 4),
             'metaDescription' => mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags(\App\Services\RichText::clean($product['description'])))), 0, 155),
