@@ -34,11 +34,11 @@ $avg = $reviewSummary['avg'];
                 <?= field_error('rating') ?>
             </fieldset>
             <label>Title (optional)
-                <input name="title" maxlength="120" value="<?= e(old('title')) ?>">
+                <input name="title" maxlength="120" value="<?= old('title') ?>">
                 <?= field_error('title') ?>
             </label>
             <label>Your review
-                <textarea name="body" rows="4" maxlength="1000" required placeholder="What did you like, and what would you tell a friend?"><?= e(old('body')) ?></textarea>
+                <textarea name="body" rows="4" maxlength="1000" required placeholder="What did you like, and what would you tell a friend?"><?= old('body') ?></textarea>
                 <?= field_error('body') ?>
             </label>
             <?= field_error('form') ?>

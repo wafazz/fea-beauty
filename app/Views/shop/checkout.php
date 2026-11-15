@@ -133,7 +133,7 @@ $defaultMethod = isset($methods['cod']) ? 'cod' : (string) array_key_first($meth
         <form method="post" action="<?= e(url('/checkout/voucher')) ?>" class="co-voucher">
             <?= csrf_field() ?>
             <label>Discount code
-                <input name="code" value="<?= e(old('code')) ?>" autocomplete="off" maxlength="40" style="text-transform:uppercase">
+                <input name="code" value="<?= old('code') ?>" autocomplete="off" maxlength="40" style="text-transform:uppercase">
             </label>
             <?= field_error('voucher') ?>
             <button class="s-btn secondary block" type="submit">Apply code</button>
@@ -152,7 +152,7 @@ $defaultMethod = isset($methods['cod']) ? 'cod' : (string) array_key_first($meth
                 <form method="post" action="<?= e(url('/checkout/gift-card')) ?>">
                     <?= csrf_field() ?>
                     <label>Gift card code
-                        <input name="code" value="<?= e(old('code')) ?>" autocomplete="off" maxlength="30" style="text-transform:uppercase"></label>
+                        <input name="code" value="<?= old('code') ?>" autocomplete="off" maxlength="30" style="text-transform:uppercase"></label>
                     <?= field_error('gift') ?>
                     <button class="s-btn secondary block" type="submit">Apply gift card</button>
                 </form>

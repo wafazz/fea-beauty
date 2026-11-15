@@ -96,7 +96,7 @@ $showReply = $staffView ? true : $canReply;
         <?= csrf_field() ?>
         <?= field_error('form') ?>
         <?= field_error('attachments') ?>
-        <textarea name="body" maxlength="2000" placeholder="<?= $staffView ? 'Reply to the customer, or write an internal note' : 'Type a message' ?>" aria-label="Message"><?= e(old('body')) ?></textarea>
+        <textarea name="body" maxlength="2000" placeholder="<?= $staffView ? 'Reply to the customer, or write an internal note' : 'Type a message' ?>" aria-label="Message"><?= old('body') ?></textarea>
         <div class="sc-row-actions">
             <input type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" aria-label="Attach files (up to 3, 5 MB each)">
             <span style="display:flex;gap:8px">
