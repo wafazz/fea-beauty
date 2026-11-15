@@ -37,7 +37,11 @@ final class SupportInboxController extends Controller
         } catch (\InvalidArgumentException $e) {
             $this->backWithErrors($back, ['attachments' => $e->getMessage()]);
         }
-        $error = SupportInboxService::reply($ticket, $this->me(), $request->str('body'), $files);
+        try {
+            $error = SupportInboxService::reply($ticket, $this->me(), $request->str('body'), $files);
+        } catch (\RuntimeException $e) {
+            $this->backWithErrors($back, ['form' => SupportAttachmentService::saveFailed($e)]);
+        }
         if ($error !== null) {
             $this->backWithErrors($back, ['form' => $error]);
         }
