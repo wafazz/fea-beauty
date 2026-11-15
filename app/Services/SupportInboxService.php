@@ -77,6 +77,10 @@ final class SupportInboxService
         }
         $t = self::decorate([$row])[0];
         $t['labels'] = self::labelsOf((int) $t['id']);
+        // How many tickets this customer has opened (a member's tickets, or a guest's by email).
+        $t['customer_tickets'] = (int) ($t['user_id'] !== null
+            ? Database::query('SELECT COUNT(*) FROM support_tickets WHERE user_id = ?', [(int) $t['user_id']])->fetchColumn()
+            : Database::query('SELECT COUNT(*) FROM support_tickets WHERE user_id IS NULL AND guest_email = ?', [(string) $t['guest_email']])->fetchColumn());
         $t['all_labels'] = Database::query('SELECT id, name, colour FROM support_labels WHERE active = 1 ORDER BY name')->fetchAll();
         $t['subscription'] = $t['subscription_id'] !== null
             ? Database::query('SELECT s.id, s.status, s.cadence, p.name AS product_name FROM subscriptions s JOIN products p ON p.id = s.product_id WHERE s.id = ?', [(int) $t['subscription_id']])->fetch() ?: null
@@ -279,6 +283,7 @@ final class SupportInboxService
         return "SELECT t.id, t.ticket_no, t.subject, t.status, t.urgency, t.user_id, t.guest_email, t.order_id, t.subscription_id,
                        t.assignee_id, t.last_message_at, t.staff_read_at, t.resolved_at, t.created_at,
                        c.name AS category_name, o.order_no, cu.name AS customer_name, COALESCE(cu.email, t.guest_email) AS customer_email,
+                       cu.phone AS customer_phone, cu.created_at AS customer_since,
                        au.name AS assignee_name,
                        (SELECT MAX(m.created_at) FROM support_messages m WHERE m.ticket_id = t.id AND m.sender = 'customer') AS last_customer_at
                 FROM support_tickets t

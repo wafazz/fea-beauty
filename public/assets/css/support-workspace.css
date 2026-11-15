@@ -1,5 +1,6 @@
 /* Support workspace: ticket list and chat side by side on wide screens, stacked on phones.
-   Used by the member support page and the admin and staff inbox. */
+   Used by the member support page and the admin and staff inbox. The chat fills its panel: only the messages
+   scroll; the reply box stays at the bottom. */
 .ws {
   --ws-line: var(--line, #d1d7db);
   --ws-card: var(--card, #fff);
@@ -13,7 +14,7 @@
   justify-self: stretch; /* the page wrapper is itself a grid: fill its full width */
   min-width: 0;
   box-sizing: border-box;
-  height: calc(100vh - 170px);
+  height: calc(100vh - 280px); /* leaves room for the page heading and bottom padding: the page itself does not scroll */
   min-height: 480px;
 }
 [hidden] { display: none !important; }
@@ -29,7 +30,7 @@
   width: 100%; box-sizing: border-box; font: inherit; padding: 10px 12px; min-height: 42px;
   border-radius: 10px; border: 1px solid var(--ws-line); background: transparent; color: inherit;
 }
-.ws-search input:focus-visible, .ws-chip:focus-visible, .ws-row:focus-visible, .ws-back:focus-visible {
+.ws-search input:focus-visible, .ws-chip:focus-visible, .ws-row:focus-visible, .ws-back:focus-visible, .ws-open:focus-visible {
   outline: 2px solid var(--ws-accent); outline-offset: 2px;
 }
 .ws-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
@@ -57,34 +58,63 @@
 .ws-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ws-accent); margin-right: 6px; vertical-align: middle; }
 .ws-time { font-size: .75rem; color: var(--ws-muted); flex: none; }
 
+/* The chat panel: a fixed-height column. Only .sc-list scrolls. */
 .ws-main {
-  display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden;
   border: 1px solid var(--ws-line); border-radius: 14px; background: var(--ws-card);
 }
-.ws-main-inner { display: flex; flex-direction: column; gap: 10px; padding: 12px; min-height: 100%; box-sizing: border-box; }
-.ws-main .sc { width: 100%; max-width: none; margin: 0; box-sizing: border-box; min-height: 0; border: 1px solid var(--ws-line); border-radius: 12px; flex: none; }
-.ws-main .sc-list { max-height: none; min-height: 220px; height: min(52vh, 560px); }
+.ws-main-inner { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px; box-sizing: border-box; }
+.ws-main .sc, .ws-main .sc.sc-wide {
+  flex: 1 1 0; min-height: 0; height: auto; width: 100%; max-width: none; margin: 0; box-sizing: border-box;
+  min-height: 0; border: 1px solid var(--ws-line); border-radius: 12px;
+}
+.ws-main .sc-list { flex: 1 1 auto; min-height: 0; height: auto; max-height: none; overflow-y: auto; overscroll-behavior: contain; }
+.ws-main .sc-composer, .ws-main .sc-note { flex: none; }
+.ws-main .sc-head { flex: none; }
+.ws-head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none; }
 .ws-back {
   display: none; align-self: flex-start; min-height: 40px; align-items: center; gap: 6px;
   color: var(--ws-accent); text-decoration: none; font-weight: 600; padding: 6px 0;
 }
+.ws-open {
+  min-height: 36px; padding: 6px 12px; border-radius: 10px; cursor: pointer; font: inherit; font-size: .85rem;
+  border: 1px solid var(--ws-line); background: none; color: inherit; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ws-open:hover { border-color: var(--ws-accent); color: var(--ws-accent); }
 .ws-empty { margin: auto; text-align: center; padding: 32px 20px; color: var(--ws-muted); display: grid; gap: 10px; justify-items: center; }
 .ws-empty h2 { margin: 0; color: inherit; font-size: 1.05rem; }
 .ws-empty p { margin: 0; }
 
-/* Phones and small tablets: one panel at a time. */
+/* Popup with customer and ticket details (staff and admin). */
+.ws-dialog {
+  border: 0; border-radius: 16px; padding: 0; color: inherit; background: var(--ws-card);
+  width: min(560px, calc(100vw - 32px)); max-height: min(86vh, 720px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .25);
+}
+.ws-dialog::backdrop { background: rgba(15, 23, 42, .45); }
+.ws-dialog-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 14px 16px; border-bottom: 1px solid var(--ws-line); position: sticky; top: 0; background: var(--ws-card);
+}
+.ws-dialog-head h2 { margin: 0; font-size: 1.02rem; }
+.ws-dialog-close {
+  min-height: 36px; min-width: 36px; border-radius: 10px; border: 1px solid var(--ws-line); background: none; color: inherit; cursor: pointer; font: inherit;
+}
+.ws-dialog-body { padding: 14px 16px 18px; display: grid; gap: 12px; overflow-y: auto; max-height: calc(min(86vh, 720px) - 60px); overscroll-behavior: contain; }
+
+/* Phones and small tablets: one panel at a time. The open chat fills the screen under the top bar. */
 @media (max-width: 899px) {
   .ws { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 0; }
   .ws-list { min-height: 0; }
   .ws-items { max-height: 62vh; }
-  .ws-main { min-height: 0; overflow: visible; }
+  .ws-main { min-height: 0; }
   .ws[data-active="1"] > .ws-list { display: none; }
   .ws:not([data-active="1"]) > .ws-main { display: none; }
+  .ws[data-active="1"] > .ws-main { height: calc(100dvh - 150px); min-height: 420px; }
   .ws-back { display: inline-flex; }
-  .ws-main .sc-list { height: 56vh; min-height: 200px; }
 }
 @media (min-width: 900px) {
-  .ws-main { overflow-y: auto; }
-  .ws-main .sc-list { height: min(46vh, 520px); }
+  .ws-main { overflow: hidden; }
 }
 @media (prefers-reduced-motion: reduce) { .ws *, .ws-chip { transition: none !important; } }

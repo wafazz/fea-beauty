@@ -3,6 +3,17 @@
 (function () {
   'use strict';
 
+  // Popups: a button with data-details-open opens the dialog with that id; a click on the dark backdrop closes it.
+  document.addEventListener('click', function (e) {
+    var open = e.target.closest ? e.target.closest('[data-details-open]') : null;
+    if (open) {
+      var dlg = document.getElementById(open.getAttribute('data-details-open'));
+      if (dlg && dlg.showModal) dlg.showModal();
+      return;
+    }
+    if (e.target.tagName === 'DIALOG' && e.target.classList.contains('ws-dialog')) e.target.close();
+  });
+
   var root = document.querySelector('[data-chat]');
   if (!root) return;
 

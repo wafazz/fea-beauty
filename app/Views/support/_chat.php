@@ -71,6 +71,13 @@ $showReply = $staffView ? true : $canReply;
             <?php if (!empty($ticket['subscription_id'])): ?><span class="sc-pill">Subscription #<?= (int) $ticket['subscription_id'] ?></span><?php endif; ?>
             <span class="sc-live" data-live title="New replies appear here as they arrive">Live</span>
         </div>
+        <?php if ($staffView): ?>
+        <div style="margin-top:8px">
+            <button type="button" class="ws-open" data-details-open="ticket-details" aria-haspopup="dialog">
+                Customer: <?= e($ticket['customer_name'] ?: ($ticket['customer_email'] ?: 'Guest')) ?> · Details
+            </button>
+        </div>
+        <?php endif; ?>
     </header>
 
     <div class="sc-list" data-chat-list aria-live="polite">
