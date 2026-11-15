@@ -7,6 +7,7 @@
             <h1>Order messages</h1>
             <p class="muted">Orders where the customer wrote last. Reply to clear them from this list.</p>
         </div>
+        <a class="s-btn secondary" href="<?= e(url('/admin/support-settings')) ?>">Categories and labels</a>
     </header>
     <section class="msg-card">
         <?php if ($waiting === []): ?>
