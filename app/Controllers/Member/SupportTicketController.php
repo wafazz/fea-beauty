@@ -99,10 +99,11 @@ final class SupportTicketController extends Controller
     public function poll(Request $request, string $ticketNo): void
     {
         $ticket = $this->mine($ticketNo);
-        Response::json([
-            'status' => $ticket['status'],
-            'messages' => SupportTicketService::messagesAfter((int) $ticket['id'], max(0, (int) $request->str('after'))),
-        ]);
+        $messages = SupportTicketService::messagesAfter((int) $ticket['id'], max(0, (int) $request->str('after')));
+        if ($messages !== []) {
+            SupportTicketService::markRead($ticket); // the customer is looking at the chat, so the new reply is read
+        }
+        Response::json(['status' => $ticket['status'], 'messages' => $messages]);
     }
 
     public function attachment(Request $request, string $ticketNo, string $id): void

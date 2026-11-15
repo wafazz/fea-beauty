@@ -1,0 +1,253 @@
+// Support chat: send replies and notes without reloading the page, and show new messages as they arrive.
+// The server still checks everything (CSRF, ownership, sizes, types). Messages are added as text, never as HTML.
+(function () {
+  'use strict';
+
+  var root = document.querySelector('[data-chat]');
+  if (!root) return;
+
+  var POLL_MS = 3000;          // new messages appear within about 3 seconds
+  var MAX_FILES = 3;
+  var MAX_BYTES = 5 * 1024 * 1024;
+  var TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+
+  var list = root.querySelector('[data-chat-list]');
+  var statusEl = root.querySelector('[data-status]');
+  var liveEl = root.querySelector('[data-live]');
+  var pollUrl = root.getAttribute('data-poll');
+  var attachUrl = root.getAttribute('data-attach');
+  var lastId = parseInt(root.getAttribute('data-last-id') || '0', 10);
+  var labels = {};
+  try { labels = JSON.parse(root.getAttribute('data-labels') || '{}'); } catch (e) { labels = {}; }
+
+  var composer = root.querySelector('[data-composer]');
+  var resolveForm = root.querySelector('[data-resolve]');
+  var body = composer ? composer.querySelector('[data-body]') : null;
+  var files = composer ? composer.querySelector('[data-files]') : null;
+  var fileList = composer ? composer.querySelector('[data-file-list]') : null;
+  var feedback = composer ? composer.querySelector('[data-feedback]') : null;
+  var sendBtn = composer ? composer.querySelector('[data-send]') : null;
+  var sending = false;
+  var polling = false;
+  var jump = null;
+  var feedbackTimer = null;
+
+  list.scrollTop = list.scrollHeight;
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function fmtBytes(n) {
+    return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+  }
+
+  function bottomNear() {
+    return list.scrollHeight - list.scrollTop - list.clientHeight < 120;
+  }
+
+  function bubble(m, attachBase) {
+    var internal = m.visibility === 'internal';
+    var staffView = root.getAttribute('data-staff') === '1';
+    var mine = staffView ? (m.sender === 'staff' && !internal) : m.sender === 'customer';
+    var cls = internal ? 'int' : (mine ? 'me' : 'shop');
+    var who = internal ? 'Internal note · ' + (m.staff_name || 'Staff')
+      : (staffView ? (m.sender === 'customer' ? 'Customer' : (m.staff_name || 'Shop team'))
+        : (m.sender === 'customer' ? '' : 'Shop'));
+    var row = el('div', 'sc-row ' + cls);
+    row.setAttribute('data-msg', String(m.id));
+    var b = el('div', 'sc-bubble');
+    if (!mine && who) b.appendChild(el('div', 'sc-pill sc-who', who));
+    (m.attachments || []).forEach(function (a) {
+      var url = attachBase.replace('__ID__', String(a.id));
+      if (String(a.mime).indexOf('image/') === 0) {
+        var link = el('a'); link.href = url; link.target = '_blank'; link.rel = 'noopener';
+        var img = el('img', 'sc-img'); img.src = url; img.alt = a.original_name; link.appendChild(img);
+        b.appendChild(link);
+      } else {
+        var f = el('a', 'sc-file', 'Attachment: ' + a.original_name); f.href = url; b.appendChild(f);
+      }
+    });
+    if (m.body) b.appendChild(el('div', 'sc-text', m.body));
+    b.appendChild(el('div', 'sc-time', String(m.created_at).substring(11, 16)));
+    row.appendChild(b);
+    return row;
+  }
+
+  function showJump(n) {
+    if (!jump) {
+      jump = el('button', 'sc-resolve', '');
+      jump.type = 'button';
+      jump.style.cssText = 'align-self:center;margin:6px auto;position:relative;z-index:1;background:var(--sc-shop, #fff)';
+      jump.addEventListener('click', function () { list.scrollTop = list.scrollHeight; jump.hidden = true; });
+      list.parentNode.insertBefore(jump, list.nextSibling);
+    }
+    jump.textContent = (n === 1 ? 'New message' : n + ' new messages') + ' ↓';
+    jump.hidden = false;
+  }
+
+  list.addEventListener('scroll', function () {
+    if (jump && bottomNear()) jump.hidden = true;
+  });
+
+  function appendMessages(messages) {
+    var stick = bottomNear();
+    var attachBase = attachUrl;
+    var added = 0;
+    messages.forEach(function (m) {
+      var id = parseInt(m.id, 10);
+      if (!id || id <= lastId || list.querySelector('[data-msg="' + id + '"]')) return;
+      list.appendChild(bubble(m, attachBase));
+      lastId = Math.max(lastId, id);
+      added++;
+    });
+    if (!added) return;
+    if (stick) list.scrollTop = list.scrollHeight; else showJump(added);
+    // Tells the ticket list beside the chat to refresh (unread dots, order of tickets).
+    document.dispatchEvent(new CustomEvent('support:new-messages', { detail: { count: added } }));
+  }
+
+  function setLive(on) {
+    if (!liveEl) return;
+    liveEl.classList.toggle('is-off', !on);
+    liveEl.textContent = on ? 'Live' : 'Reconnecting…';
+  }
+
+  function setStatus(status) {
+    if (!statusEl || !status || !labels[status]) return;
+    if (statusEl.textContent !== labels[status]) statusEl.textContent = labels[status];
+  }
+
+  function poll() {
+    if (document.hidden || polling || !pollUrl) return Promise.resolve();
+    polling = true;
+    var sep = pollUrl.indexOf('?') === -1 ? '?' : '&';
+    return fetch(pollUrl + sep + 'after=' + lastId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error('poll'); return r.json(); })
+      .then(function (d) {
+        setLive(true);
+        if (d.messages && d.messages.length) appendMessages(d.messages);
+        if (d.status) setStatus(d.status);
+      })
+      .catch(function () { setLive(false); })
+      .then(function () { polling = false; });
+  }
+
+  function setFeedback(text, isError) {
+    if (!feedback) return;
+    clearTimeout(feedbackTimer);
+    feedback.textContent = text;
+    feedback.className = 'sc-feedback ' + (isError ? 'is-error' : 'is-ok');
+    if (!isError) feedbackTimer = setTimeout(function () { feedback.textContent = ''; }, 2500);
+  }
+
+  function renderFiles() {
+    if (!files || !fileList) return null;
+    fileList.innerHTML = '';
+    var picked = Array.prototype.slice.call(files.files || []);
+    picked.forEach(function (f) {
+      fileList.appendChild(el('span', 'sc-pill', f.name + ' (' + fmtBytes(f.size) + ')'));
+    });
+    if (picked.length > MAX_FILES) return 'Attach up to ' + MAX_FILES + ' files.';
+    for (var i = 0; i < picked.length; i++) {
+      var f = picked[i];
+      if (f.size > MAX_BYTES) return '"' + f.name + '" is larger than 5 MB.';
+      if (TYPES.indexOf(f.type) === -1 && !/\.(jpe?g|png|webp|pdf)$/i.test(f.name)) return '"' + f.name + '" is not a JPG, PNG, WebP or PDF.';
+    }
+    return null;
+  }
+
+  function clearFiles() {
+    if (files) files.value = '';
+    if (fileList) fileList.innerHTML = '';
+  }
+
+  function send(form, action) {
+    if (sending || !form) return;
+    var text = body ? body.value.trim() : '';
+    var count = files && files.files ? files.files.length : 0;
+    if (!text && count === 0) {
+      setFeedback('Write a message or attach a file first.', true);
+      if (body) body.focus();
+      return;
+    }
+    var problem = renderFiles();
+    if (problem) { setFeedback(problem, true); return; }
+
+    sending = true;
+    if (sendBtn) sendBtn.disabled = true;
+    setFeedback('Sending…', false);
+    fetch(action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (j) { return { ok: r.ok, status: r.status, json: j }; });
+    }).then(function (res) {
+      if (res.json && res.json.ok) {
+        if (body) body.value = '';
+        clearFiles();
+        setFeedback(res.json.message || 'Sent.', false);
+        return poll(); // shows our own message straight away
+      }
+      var msg = (res.json && res.json.message) || (res.status === 419
+        ? 'Your session has expired. Reload the page and try again.'
+        : 'Could not send. Please try again.');
+      setFeedback(msg, true);
+    }).catch(function () {
+      setFeedback('No connection. Your message is still in the box; try again.', true);
+    }).then(function () {
+      sending = false;
+      if (sendBtn) sendBtn.disabled = false;
+    });
+  }
+
+  if (composer) {
+    composer.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var submitter = e.submitter;
+      var action = submitter && submitter.getAttribute('formaction') ? submitter.getAttribute('formaction') : composer.getAttribute('action');
+      send(composer, action);
+    });
+    if (files) files.addEventListener('change', function () {
+      var problem = renderFiles();
+      setFeedback(problem || '', !!problem);
+    });
+    if (body) body.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        composer.requestSubmit ? composer.requestSubmit() : composer.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
+    });
+  }
+
+  if (resolveForm) {
+    resolveForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      fetch(resolveForm.getAttribute('action'), {
+        method: 'POST',
+        body: new FormData(resolveForm),
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin'
+      }).then(function (r) { return r.json().catch(function () { return null; }); })
+        .then(function (j) {
+          if (j && j.ok) {
+            setStatus('resolved');
+            resolveForm.remove();
+            setFeedback(j.message || 'Marked as resolved.', false);
+            document.dispatchEvent(new CustomEvent('support:new-messages', { detail: { count: 0 } }));
+          } else {
+            setFeedback((j && j.message) || 'Could not update the ticket. Try again.', true);
+          }
+        })
+        .catch(function () { setFeedback('No connection. Try again.', true); });
+    });
+  }
+
+  setInterval(poll, POLL_MS);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
+})();

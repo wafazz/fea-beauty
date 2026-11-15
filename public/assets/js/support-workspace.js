@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var REFRESH_MS = 20000;
+  var REFRESH_MS = 15000;
 
   function setup(root) {
     var items = root.querySelector('[data-ws-items]');
@@ -81,6 +81,8 @@
     apply();
     setInterval(refresh, REFRESH_MS);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+    // A new message in the open chat moves its ticket to the top and updates unread marks: refresh now.
+    document.addEventListener('support:new-messages', refresh);
   }
 
   document.querySelectorAll('[data-ws]').forEach(setup);
