@@ -54,7 +54,9 @@ $showReply = $staffView ? true : $canReply;
   .sc-resolve { background: none; border: 1px solid var(--sc-line); border-radius: 8px; padding: 6px 10px; color: inherit; cursor: pointer; min-height: 36px; }
   .sc-send[disabled] { opacity: .6; cursor: progress; }
   /* Attachment viewer popup: images and PDFs open here instead of a new tab. */
-  .ws-viewer { border: 0; border-radius: 16px; padding: 0; background: #fff; color: #111827; box-shadow: 0 20px 60px rgba(0, 0, 0, .35); width: min(960px, calc(100vw - 24px)); height: min(88vh, 900px); max-height: none; display: flex; flex-direction: column; }
+  .ws-viewer { border: 0; border-radius: 16px; padding: 0; background: #fff; color: #111827; box-shadow: 0 20px 60px rgba(0, 0, 0, .35); width: min(960px, calc(100vw - 24px)); height: min(88vh, 900px); max-height: none; }
+  /* Flex only while open: a closed dialog must stay hidden (display set here would show it at the bottom of the page). */
+  .ws-viewer[open] { display: flex; flex-direction: column; }
   .ws-viewer::backdrop { background: rgba(15, 23, 42, .6); }
   .ws-viewer-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #e5e7eb; }
   .ws-viewer-head strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: .95rem; }
