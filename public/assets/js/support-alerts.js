@@ -39,6 +39,37 @@
     pill.setAttribute('aria-label', count + ' waiting');
   }
 
+  // Alert sound: a short two-tone chime made in the browser (no audio file). Browsers only allow sound after the
+  // user has interacted with the page, so the first click or key press unlocks it.
+  var audioCtx = null;
+  function unlockAudio() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) { audioCtx = null; }
+  }
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+    document.addEventListener(ev, unlockAudio, { passive: true });
+  });
+  function tone(freq, start, length) {
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + start + length);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + start);
+    osc.stop(audioCtx.currentTime + start + length + 0.02);
+  }
+  function chime() {
+    if (!audioCtx || audioCtx.state !== 'running') return;
+    tone(880, 0, 0.18);
+    tone(1175, 0.2, 0.25);
+  }
+
   function notify(d) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     var n = new Notification(d.latest_title || 'Support', {
@@ -59,7 +90,10 @@
       .then(function (d) {
         if (!d) return;
         setBadge(d.count);
-        if (seen !== null && d.latest_id > seen) notify(d);
+        if (seen !== null && d.latest_id > seen) {
+          chime();
+          notify(d);
+        }
         seen = d.latest_id;
       })
       .catch(function () { /* offline: try again on the next tick */ });
