@@ -1,6 +1,6 @@
 # Support Tickets (with Subscriptions) — Plan
 
-Status: **PLAN ONLY — no code written.** Execute only after Fakrul approves.
+Status: **Phases 1–5 built (section 14).** Phase 5 review done in one pass; the full three-specialist gate (Argus, Cipher, Aegis) is still to be run before the feature is marked done on the VPS.
 Tier: **T2 Full** (schema, customer data, authz, file upload). Full gates apply before done, including Phase 6 security.
 Owner: Fakrul | Planner: IRIS
 Related: `Docs/feature-plan.md` item 11 (Customer support tickets), `Docs/new-features-plan.md` item 4 (Subscriptions).
@@ -10,6 +10,7 @@ Related: `Docs/feature-plan.md` item 11 (Customer support tickets), `Docs/new-fe
 |---|---|---|
 | 2026-11-15 | 1 | Initial plan from the requested feature list, plus suggestions and open questions |
 | 2026-11-15 | 2 | Fakrul's answers recorded as decisions (section 0). Awaiting explicit go-ahead to build |
+| 2026-11-15 | 3 | Phases 1–5 built and tested. Results, checklist and deviations in section 14 |
 
 ## 0. Decisions (Rev 2, from Fakrul)
 | # | Question | Decision |
@@ -160,3 +161,57 @@ Each phase is a separate commit on `feature/jnt-express` (or a new branch), revi
 
 ## 13. Out of scope for this plan
 Payments inside tickets, refunds issued from a ticket (refunds stay in the Return flow), and inbound email replies.
+
+## 14. Build status and security review (Phase 5)
+
+Commits on `feature/jnt-express`: plan 2f6106e/bc645d0; phase 1 2f6106e, phase 2 3245d5b, phase 3 296fc05, phase 4 d3fbf3d; phase 5 (this section and the test file).
+
+### Migrations (run in order on the VPS, after a database backup)
+| File | What |
+|---|---|
+| 076_support_tickets.sql | Categories, labels, tickets, ticket labels, attachments; messages get `ticket_id` and `visibility`; backfill of old order threads |
+| 077_support_ticket_access.sql | `access_hash` for guest tickets (token stored as a hash only) |
+| 078_support_timestamps_precision.sql | Millisecond precision for ticket and message times (unread marks) |
+
+### Tests
+- `tests/SupportTicketDbTest.php` (repo, 83 checks): ownership, guest tokens, order and subscription links, messages and internal notes, reopen and close rules, attachment checks, inbox filters and actions, bulk, audit, emails (captured), unread badges, module default. Runs on `*_test` databases only.
+- Full suite on a brand-new `_test` database: 1,266 pass. The one failure is the existing "defaults" check, which fails only because every module is switched on for that run.
+- Over HTTP (local server against a test database): guest flow, member flow, staff and admin flow, module off (404), CSRF (419 without a token), attachments (type, size and count refused; download checks), badges.
+
+### Security checklist (plan section 8)
+| Check | Result |
+|---|---|
+| Ownership on every member read and write | Pass: member routes go through the member's own tickets; another member gets 404 |
+| Guest access needs ticket number and token | Pass: token is 128-bit random, stored as SHA-256 only, compared with `hash_equals` |
+| Order and subscription links checked on the server | Pass: member's own order; guest needs the order's tracking code; subscription must be active and the member's |
+| Attachments: allowlist, content check, size, count | Pass: JPG/PNG/WebP/PDF by MIME and signature, 5 MB, 3 per message, random names |
+| Attachments stored outside public/ and served after an ownership check | Pass: `storage/support` (git-ignored); served by controller with `nosniff`; PDFs download, images show inline |
+| Text is plain and escaped | Pass: server escapes; the live chat inserts text only, never HTML |
+| Rate limits on creating and replying | Pass: per IP (10 tickets and 30 replies a minute) |
+| CSRF on every form | Pass: member and guest POSTs return 419 without a token |
+| Module gate on every route | Pass: 404 when off, checked over HTTP |
+| Audit of status, assignee, urgency and labels | Pass: written without message text |
+| Email contents | Pass: ticket number and link only; no message text; no guest secret link in replies |
+| Referrer leaks of the guest link | Pass: Referrer-Policy is `strict-origin-when-cross-origin`, so other sites get only the site address |
+| Urgency changes are admin-only | Pass: server returns 403 for staff |
+
+### Findings and what was done
+1. **Timestamp precision (fixed):** same-second reads and replies could leave the unread badge wrong. Fixed by migration 078.
+2. **Portal menu merge (fixed):** `+` on lists dropped menu items. Fixed with `array_merge`.
+3. **Icon missing (fixed):** the portal icon table had no `shield` entry; added.
+4. **Open, accepted:** the guest link carries its token in the address, as the existing order-tracking links do. Referrer policy limits the exposure.
+5. **Open, decision needed:** any active staff member can see every ticket (decision D8: module switch and roles only). If staff should see only their assigned tickets, that is a small change.
+6. **Open, accepted:** attachments are not virus-scanned. Type and content checks only (plan section 10.8).
+7. **Open:** the full Argus, Cipher and Aegis gate is still to be run on the VPS build.
+
+### Deviations from the plan
+- Inbox routes are `/admin/tickets` and `/staff/tickets`, not `/admin/support`, because the old order-messages page uses that path.
+- Guests do not get a new link in staff reply emails. They use the first email's link (the token is only stored as a hash, so it cannot be re-sent).
+- The customer's order page still has the old per-order message form. It was left as it was and can be switched to tickets later.
+- No ticket history panel in the staff chat yet. The audit log has the data.
+- The chat refreshes every 8 seconds; the staff list does not refresh on its own.
+
+### Not checked
+- Browser layout on phones and in dark mode.
+- Real email delivery (email is not configured on this Mac; the notifier was tested with a capture hook).
+- VPS deployment.
