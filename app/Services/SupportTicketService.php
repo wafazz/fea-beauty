@@ -85,7 +85,10 @@ final class SupportTicketService
             throw $e;
         }
 
-        self::emailOpened($ticketNo, $member === null ? strtolower(trim((string) $guestEmail)) : (string) ($member['email'] ?? ''), $token);
+        // A member who is already on the site sees the new ticket in the portal: no email then.
+        if ($member === null || !SupportPresence::isOnline((int) $member['id'])) {
+            self::emailOpened($ticketNo, $member === null ? strtolower(trim((string) $guestEmail)) : (string) ($member['email'] ?? ''), $token);
+        }
         if ($urgency === 'urgent') {
             SupportNotifier::urgentRaised(SupportInboxService::detail($ticketNo) ?? []);
         }

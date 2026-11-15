@@ -454,6 +454,7 @@ return function (Router $r): void {
             $r->get('/support/new', 'Member/SupportTicketController@create', ['module:support']);
             $r->post('/support', 'Member/SupportTicketController@store', ['module:support']);
             $r->get('/support/counts', 'Member/SupportTicketController@counts', ['module:support']);
+            $r->get('/presence', 'Member/PresenceController@ping');
             $r->get('/support/{ticketNo}', 'Member/SupportTicketController@show', ['module:support']);
             $r->post('/support/{ticketNo}/messages', 'Member/SupportTicketController@reply', ['module:support']);
             $r->post('/support/{ticketNo}/resolve', 'Member/SupportTicketController@resolve', ['module:support']);

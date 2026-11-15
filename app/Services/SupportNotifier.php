@@ -36,6 +36,10 @@ final class SupportNotifier
         if ($to === '' || !self::ready()) {
             return;
         }
+        // A member who is looking at the site already sees the reply live: no email (guests always get one).
+        if ((int) ($ticket['user_id'] ?? 0) > 0 && SupportPresence::isOnline((int) $ticket['user_id'])) {
+            return;
+        }
         $shop = (string) config('app.name');
         $no = (string) $ticket['ticket_no'];
         $hello = trim((string) ($ticket['customer_name'] ?? '')) !== '' ? 'Hello ' . $ticket['customer_name'] . ',' : 'Hello,';
