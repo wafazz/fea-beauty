@@ -87,10 +87,16 @@ final class SupportInboxService
         return $t;
     }
 
+    /** Tickets where the customer wrote last and nobody has answered yet: the sidebar badge. */
+    public static function needsReplyCount(): int
+    {
+        return (int) Database::query("SELECT COUNT(*) FROM support_tickets WHERE status = 'waiting_staff'")->fetchColumn();
+    }
+
     /** Staff opened the ticket: clears its unread mark. */
     public static function markRead(int $ticketId): void
     {
-        Database::query('UPDATE support_tickets SET staff_read_at = NOW() WHERE id = ?', [$ticketId]);
+        Database::query('UPDATE support_tickets SET staff_read_at = NOW(3) WHERE id = ?', [$ticketId]);
     }
 
     /** A public reply to the customer. Returns an error message, or null when posted. */
@@ -110,7 +116,7 @@ final class SupportInboxService
                 $stored[] = SupportAttachmentService::store((int) $ticket['id'], $messageId, $file);
             }
             Database::query(
-                "UPDATE support_tickets SET status = 'waiting_customer', last_message_at = NOW(), staff_read_at = NOW(), resolved_at = NULL, assignee_id = COALESCE(assignee_id, ?) WHERE id = ?",
+                "UPDATE support_tickets SET status = 'waiting_customer', last_message_at = NOW(3), staff_read_at = NOW(3), resolved_at = NULL, assignee_id = COALESCE(assignee_id, ?) WHERE id = ?",
                 [$staffId, (int) $ticket['id']]
             );
             $pdo->commit();
@@ -122,6 +128,7 @@ final class SupportInboxService
             throw $e;
         }
         AuditService::log($staffId, 'support.reply', (string) $ticket['ticket_no']);
+        SupportNotifier::customerReplied($ticket); // one email per reply; internal notes send nothing
         return null;
     }
 
@@ -133,7 +140,7 @@ final class SupportInboxService
             return 'Write a note of up to ' . SupportService::MAX_CHARS . ' characters.';
         }
         Database::query("INSERT INTO support_messages (ticket_id, sender, staff_id, visibility, body) VALUES (?, 'staff', ?, 'internal', ?)", [(int) $ticket['id'], $staffId, $body]);
-        Database::query('UPDATE support_tickets SET staff_read_at = NOW() WHERE id = ?', [(int) $ticket['id']]);
+        Database::query('UPDATE support_tickets SET staff_read_at = NOW(3) WHERE id = ?', [(int) $ticket['id']]);
         AuditService::log($staffId, 'support.note', (string) $ticket['ticket_no']);
         return null;
     }
@@ -156,7 +163,7 @@ final class SupportInboxService
             return 'Unknown status.';
         }
         if ($status === 'resolved') {
-            Database::query("UPDATE support_tickets SET status = 'resolved', resolved_at = NOW() WHERE id = ?", [(int) $ticket['id']]);
+            Database::query("UPDATE support_tickets SET status = 'resolved', resolved_at = NOW(3) WHERE id = ?", [(int) $ticket['id']]);
         } else {
             Database::query('UPDATE support_tickets SET status = ?, resolved_at = NULL WHERE id = ?', [$status, (int) $ticket['id']]);
         }
@@ -295,7 +302,7 @@ final class SupportInboxService
         foreach ($rows as &$r) {
             $r['id'] = (int) $r['id'];
             $r['labels'] = $labels[$r['id']] ?? [];
-            $r['unread'] = $r['staff_read_at'] === null || ($r['last_customer_at'] !== null && strtotime((string) $r['last_customer_at']) > strtotime((string) $r['staff_read_at']));
+            $r['unread'] = $r['staff_read_at'] === null || ($r['last_customer_at'] !== null && new \DateTimeImmutable((string) $r['last_customer_at']) > new \DateTimeImmutable((string) $r['staff_read_at']));
             $hours = self::SLA_HOURS[$r['urgency']] ?? null;
             $r['overdue'] = $hours !== null && $r['status'] === 'waiting_staff' && $r['last_customer_at'] !== null
                 && strtotime((string) $r['last_customer_at']) < time() - $hours * 3600;

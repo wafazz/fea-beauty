@@ -65,7 +65,7 @@ final class SupportTicketService
         try {
             Database::query(
                 "INSERT INTO support_tickets (user_id, guest_email, category_id, subject, urgency, status, order_id, subscription_id, access_hash, last_message_at, customer_read_at)
-                 VALUES (?, ?, ?, ?, ?, 'waiting_staff', ?, ?, ?, NOW(), NOW())",
+                 VALUES (?, ?, ?, ?, ?, 'waiting_staff', ?, ?, ?, NOW(3), NOW(3))",
                 [$member['id'] ?? null, $member === null ? strtolower(trim((string) $guestEmail)) : null, $categoryId, $subject, $urgency, $orderId, $subscriptionId, $token === null ? null : hash('sha256', $token)]
             );
             $id = (int) $pdo->lastInsertId();
@@ -86,6 +86,9 @@ final class SupportTicketService
         }
 
         self::emailOpened($ticketNo, $member === null ? strtolower(trim((string) $guestEmail)) : (string) ($member['email'] ?? ''), $token);
+        if ($urgency === 'urgent') {
+            SupportNotifier::urgentRaised(SupportInboxService::detail($ticketNo) ?? []);
+        }
         return ['ok' => true, 'ticket_no' => $ticketNo, 'token' => $token, 'id' => $id];
     }
 
@@ -117,7 +120,7 @@ final class SupportTicketService
                 $stored[] = SupportAttachmentService::store((int) $ticket['id'], $messageId, $file);
             }
             Database::query(
-                "UPDATE support_tickets SET status = 'waiting_staff', last_message_at = NOW(), customer_read_at = NOW()" . ($reopen ? ', resolved_at = NULL' : '') . ' WHERE id = ?',
+                "UPDATE support_tickets SET status = 'waiting_staff', last_message_at = NOW(3), customer_read_at = NOW(3)" . ($reopen ? ', resolved_at = NULL' : '') . ' WHERE id = ?',
                 [(int) $ticket['id']]
             );
             $pdo->commit();
@@ -128,7 +131,19 @@ final class SupportTicketService
             }
             throw $e;
         }
+        if (($ticket['urgency'] ?? '') === 'urgent') {
+            SupportNotifier::urgentRaised(SupportInboxService::detail((string) $ticket['ticket_no']) ?? []);
+        }
         return null;
+    }
+
+    /** How many of a member's tickets have a reply they have not read yet. */
+    public static function unreadCountForMember(int $userId): int
+    {
+        return (int) Database::query(
+            "SELECT COUNT(*) FROM support_tickets WHERE user_id = ? AND status = 'waiting_customer' AND (customer_read_at IS NULL OR customer_read_at < last_message_at)",
+            [$userId]
+        )->fetchColumn();
     }
 
     /** Can the customer still reply? Closed tickets no; resolved ones only within REOPEN_DAYS of being resolved. */
@@ -150,12 +165,12 @@ final class SupportTicketService
         if (in_array($ticket['status'], ['resolved', 'closed'], true)) {
             return;
         }
-        Database::query("UPDATE support_tickets SET status = 'resolved', resolved_at = NOW() WHERE id = ?", [(int) $ticket['id']]);
+        Database::query("UPDATE support_tickets SET status = 'resolved', resolved_at = NOW(3) WHERE id = ?", [(int) $ticket['id']]);
     }
 
     public static function markRead(array $ticket): void
     {
-        Database::query('UPDATE support_tickets SET customer_read_at = NOW() WHERE id = ?', [(int) $ticket['id']]);
+        Database::query('UPDATE support_tickets SET customer_read_at = NOW(3) WHERE id = ?', [(int) $ticket['id']]);
     }
 
     /** A member's ticket, or null when it is not theirs (the same answer as "not found"). */
@@ -186,7 +201,7 @@ final class SupportTicketService
             [$userId]
         )->fetchAll();
         foreach ($rows as &$r) {
-            $r['unread'] = $r['customer_read_at'] === null || strtotime((string) $r['customer_read_at']) < strtotime((string) $r['last_message_at']);
+            $r['unread'] = $r['status'] === 'waiting_customer' && ($r['customer_read_at'] === null || new \DateTimeImmutable((string) $r['customer_read_at']) < new \DateTimeImmutable((string) $r['last_message_at']));
         }
         unset($r);
         return $rows;
