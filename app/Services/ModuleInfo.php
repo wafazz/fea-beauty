@@ -101,10 +101,10 @@ final class ModuleInfo
             'off' => 'The page is hidden. No data is changed.',
         ],
         'support' => [
-            'what' => 'A message thread on each order between the customer and the shop, with a list of orders waiting for a reply.',
-            'where' => 'Order pages (customers). Sales > Order messages (admin).',
-            'on' => 'Customers and the shop can message about an order.',
-            'off' => 'Threads are hidden. Messages are kept.',
+            'what' => 'Support tickets from members and guests, with categories, urgency, labels, order or subscription links, attachments, an inbox for staff, and email replies.',
+            'where' => 'Member portal: Support. Guests: Track order > Contact support. Staff and admin: Sales > Support tickets. Categories and labels: Support tickets > Categories and labels.',
+            'on' => 'Customers can open and follow tickets, and the team can answer them.',
+            'off' => 'Support pages and menus are hidden, new tickets and replies stop, and support emails stop. Tickets are kept.',
         ],
         'tax' => [
             'what' => 'SST is worked out from prices that already include it, shown at checkout and on invoices, with a monthly SST report.',

@@ -7,7 +7,7 @@
             <h1>Support categories and labels</h1>
             <p class="muted">Categories are the topic a customer picks when opening a ticket (one per ticket). Labels are for your team's own tracking (many per ticket). Inactive items stay on existing tickets but cannot be picked for new ones.</p>
         </div>
-        <a class="s-btn secondary" href="<?= e(url('/admin/support')) ?>">Back to messages</a>
+        <a class="s-btn secondary" href="<?= e(url('/admin/tickets')) ?>">Back to support inbox</a>
     </header>
 
     <section class="msg-card">
