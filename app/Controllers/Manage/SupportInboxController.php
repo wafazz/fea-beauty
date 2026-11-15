@@ -15,6 +15,18 @@ use App\Services\SupportTicketService;
 /** Support inbox for admins and staff: list, chat, reply, internal note, assign, status, urgency, labels, bulk. */
 final class SupportInboxController extends Controller
 {
+    /** Live badge and alerts for admins and staff: tickets waiting for an answer, and the newest customer message (JSON). */
+    public function counts(Request $request): void
+    {
+        $latest = SupportInboxService::latestCustomerMessage();
+        Response::json([
+            'count' => SupportInboxService::needsReplyCount(),
+            'latest_id' => $latest['id'] ?? 0,
+            'latest_url' => $latest ? url($this->base() . '/tickets/' . $latest['ticket_no']) : null,
+            'latest_title' => 'New customer message',
+        ]);
+    }
+
     public function index(Request $request): void
     {
         $this->render(null, $request);
