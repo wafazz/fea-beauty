@@ -58,10 +58,12 @@ $showReply = $staffView ? true : $canReply;
   .ws-viewer::backdrop { background: rgba(15, 23, 42, .6); }
   .ws-viewer-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #e5e7eb; }
   .ws-viewer-head strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: .95rem; }
-  .ws-viewer .ws-dialog-body { flex: 1; min-height: 0; max-height: none; padding: 0; overflow: hidden; display: flex; background: #111827; }
-  .ws-viewer-stage { flex: 1; min-width: 0; min-height: 0; display: grid; place-items: center; background: #111827; }
-  .ws-viewer-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
-  .ws-viewer-stage iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+  /* The popup scrolls: a tall photo can be read from top to bottom; a PDF scrolls inside its own frame. */
+  .ws-viewer .ws-dialog-body { flex: 1; min-height: 0; max-height: none; padding: 0; overflow: auto; -webkit-overflow-scrolling: touch; display: block; background: #111827; overscroll-behavior: contain; }
+  .ws-viewer-stage { min-width: 0; background: #111827; }
+  .ws-viewer-stage img { display: block; width: auto; max-width: 100%; height: auto; margin: 0 auto; }
+  .ws-viewer-stage iframe { display: block; width: 100%; height: calc(min(88vh, 900px) - 58px); border: 0; background: #fff; }
+  @media (max-width: 640px) { .ws-viewer { width: calc(100vw - 16px); height: 92vh; } .ws-viewer-stage iframe { height: calc(92vh - 58px); } }
   .ws-viewer-actions { display: flex; gap: 8px; align-items: center; }
   .ws-viewer-actions a, .ws-viewer-actions button { min-height: 36px; padding: 6px 12px; border-radius: 10px; border: 1px solid #d1d5db; background: #fff; color: #111827; text-decoration: none; font: inherit; font-size: .85rem; cursor: pointer; }
   .sc-live { display: inline-flex; align-items: center; gap: 6px; font-size: .75rem; color: var(--sc-muted); }

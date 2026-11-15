@@ -20,7 +20,14 @@ $unassignedCount = count(array_filter($tickets, fn($t) => $t['assignee_id'] === 
 <link rel="stylesheet" href="<?= e(asset('css/support-workspace.css')) ?>">
 <style>
   /* The filter bar sits above the workspace, so the workspace gets less height than on the member page. */
-  .ws { height: calc(100vh - 414px); min-height: 480px; }
+  .ws { height: calc(100vh - 340px); min-height: 480px; }
+  .msg-page > .msg-head { margin-bottom: 6px; }
+  /* The chat fills the screen down to the bottom edge: no extra space under it on this page. */
+  .msg-page:has(.ws) { padding-bottom: 0; }
+  main.content:has(.ws) { padding-bottom: 12px; }
+  .inbox-filters { gap: 6px; margin-bottom: 8px; }
+  .inbox-filters label { gap: 2px; }
+  .inbox-filters input, .inbox-filters select { min-width: 120px; min-height: 36px; }
   @media (max-width: 899px) {
     .ws { height: auto; min-height: 0; }
     /* A ticket is open on a phone: the chat takes the whole screen, so the heading and filters step aside. */
@@ -30,8 +37,7 @@ $unassignedCount = count(array_filter($tickets, fn($t) => $t['assignee_id'] === 
   }
   .inbox-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 12px; }
   .inbox-filters label { display: grid; gap: 4px; font-size: .8rem; }
-  .inbox-filters input, .inbox-filters select { min-width: 120px; min-height: 40px; }
-  .inbox-bulk { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px; border-bottom: 1px solid var(--line, #d1d7db); }
+    .inbox-bulk { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px; border-bottom: 1px solid var(--line, #d1d7db); }
   .inbox-row { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; padding: 10px 12px; min-height: 44px; border-bottom: 1px solid var(--line, #d1d7db); }
   .inbox-row.is-active { background: rgba(37, 99, 235, .10); box-shadow: inset 3px 0 0 var(--accent, #2563eb); }
   .inbox-row input[type="checkbox"] { margin-top: 4px; width: 18px; height: 18px; }
