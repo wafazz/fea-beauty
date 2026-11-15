@@ -310,7 +310,8 @@ final class ProductController extends ManageController
 
         // Commission override is admin-only; staff edits keep whatever is stored.
         $rate = $existing['commission_rate'] ?? null;
-        if ($this->isAdmin()) {
+        // The field is only shown while the affiliate programme is on; otherwise the stored override is kept.
+        if ($this->isAdmin() && \App\Services\Modules::enabled('affiliates')) {
             $raw = trim($request->str('commission_rate'));
             if ($raw === '') {
                 $rate = null;
