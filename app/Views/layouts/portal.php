@@ -235,7 +235,7 @@ $siteLogo = \App\Services\SiteLogo::url(); // the logo replaces the shop name wh
 <?php require BASE_PATH . '/app/Views/partials/invoice_modal.php'; ?>
 <script src="<?= e(asset('js/invoice-modal.js')) ?>" defer></script>
 <?php if ($supportTicketsMenu && ($role === 'member' || $isAdminRole || $role === 'staff')): ?>
-<script src="<?= e(asset('js/support-alerts.js')) ?>" defer data-role="<?= e($role === 'member' ? 'member' : 'inbox') ?>" data-counts="<?= e(url($role === 'member' ? '/member/support/counts' : ($role === 'staff' ? '/staff/tickets/counts' : '/admin/tickets/counts'))) ?>" data-link="<?= e(url($role === 'member' ? '/member/support' : ($role === 'staff' ? '/staff/tickets' : '/admin/tickets'))) ?>"></script>
+<script src="<?= e(asset('js/support-alerts.js')) ?>" defer data-role="<?= e($role === 'member' ? 'member' : 'inbox') ?>" data-counts="<?= e(url($role === 'member' ? '/member/support/counts' : ($role === 'staff' ? '/staff/tickets/counts' : '/admin/tickets/counts'))) ?>" data-link="<?= e(url($role === 'member' ? '/member/support' : ($role === 'staff' ? '/staff/tickets' : '/admin/tickets'))) ?>"<?= $role === 'member' ? ' data-presence="' . e(url('/member/presence')) . '"' : '' ?>></script>
 <?php endif; ?>
 </body>
 </html>

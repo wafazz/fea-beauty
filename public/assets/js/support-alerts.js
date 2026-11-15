@@ -131,6 +131,19 @@
     document.body.appendChild(box);
   }
 
+  // Check-in for members: tells the server this member is looking at the site, so support emails can be skipped.
+  // Sent only while the tab is visible, now and then.
+  var presenceUrl = me.getAttribute('data-presence');
+  function checkIn() {
+    if (!presenceUrl || document.hidden) return;
+    fetch(presenceUrl + '?visible=1', { credentials: 'same-origin' }).catch(function () { /* offline: nothing to do */ });
+  }
+  if (presenceUrl) {
+    checkIn();
+    setInterval(checkIn, 60000);
+    document.addEventListener('visibilitychange', checkIn);
+  }
+
   poll();
   setInterval(poll, POLL_MS);
   offerAlerts();
