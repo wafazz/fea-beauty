@@ -25,7 +25,7 @@ final class Modules
         'bulk_pricing' => ['Bulk price editor', 'Change many regular prices by a percentage, with a preview and undo, for admins. Off hides the page. Prices already changed are kept.'],
         'product_csv' => ['Product import and export', 'Export all prices and stock as a spreadsheet, or upload one to change them by SKU. Off hides the page. Nothing is changed by the switch.'],
         'returns' => ['Returns and refunds', 'Return requests from customers, approval, stock return and refund records. Off hides the return form and the admin page. Open requests are kept.'],
-        'support' => ['Order messages', 'A message thread on each order, between the customer and the shop, with the admin reply list. Off hides the thread on order pages and the admin list. Existing messages are kept.'],
+        'support' => ['Support tickets', 'Customer and guest support tickets with categories, urgency, labels, attachments, an internal-note chat for staff and email replies. Off hides the Support menus and pages, stops new tickets and replies, and stops support emails. Existing tickets are kept.'],
         'loyalty' => ['Loyalty points', 'Members earn points on completed orders and can spend them at checkout. Off hides the points at checkout and stops earning and spending. Balances are kept.'],
         'gift_cards' => ['Gift cards', 'Gift cards admins issue and customers redeem at checkout. Off hides the checkout box and stops new redemptions. Existing cards and balances are kept.'],
         'bundles' => ['Bundles', 'Products made of other products, sold at one price. Off stops new bundle sales and hides the bundle list. Orders already placed are still returned to stock correctly.'],
