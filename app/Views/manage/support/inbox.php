@@ -20,7 +20,7 @@ $unassignedCount = count(array_filter($tickets, fn($t) => $t['assignee_id'] === 
 <link rel="stylesheet" href="<?= e(asset('css/support-workspace.css')) ?>">
 <style>
   /* The filter bar sits above the workspace, so the workspace gets less height than on the member page. */
-  .ws { height: calc(100vh - 340px); min-height: 480px; }
+  .ws { height: calc(100vh - 230px); min-height: 480px; }
   .msg-page > .msg-head { margin-bottom: 6px; }
   /* The chat fills the screen down to the bottom edge: no extra space under it on this page. */
   .msg-page:has(.ws) { padding-bottom: 0; }
@@ -38,6 +38,13 @@ $unassignedCount = count(array_filter($tickets, fn($t) => $t['assignee_id'] === 
   /* The message area is a fixed 300 px; it scrolls on its own, and the reply box stays below it. */
   .ws-main .sc-list { flex: none; height: 300px; max-height: 300px; min-height: 0; }
   .inbox-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 12px; }
+  /* Filters live in the list column (collapsible), so the chat starts higher on the page. */
+  .ws-filters { border-bottom: 1px solid var(--line, #d1d7db); }
+  .ws-filters summary { cursor: pointer; padding: 10px 12px; font-weight: 600; font-size: .9rem; min-height: 40px; list-style-position: inside; }
+  .ws-filters .inbox-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0; padding: 0 10px 10px; align-items: end; }
+  .ws-filters .inbox-filters label { min-width: 0; font-size: .78rem; gap: 2px; }
+  .ws-filters .inbox-filters input, .ws-filters .inbox-filters select { min-width: 0; width: 100%; box-sizing: border-box; }
+  .ws-filters .inbox-filters button { grid-column: 1 / -1; min-height: 40px; }
   .inbox-filters label { display: grid; gap: 4px; font-size: .8rem; }
     .inbox-bulk { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px; border-bottom: 1px solid var(--line, #d1d7db); }
   .inbox-row { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; padding: 10px 12px; min-height: 44px; border-bottom: 1px solid var(--line, #d1d7db); }
@@ -69,48 +76,51 @@ $unassignedCount = count(array_filter($tickets, fn($t) => $t['assignee_id'] === 
         <a class="s-btn secondary" href="<?= e(url($base . '/support-settings')) ?>">Categories and labels</a>
     </header>
 
-    <form method="get" action="<?= e(url($base . '/tickets')) ?>" class="inbox-filters">
-        <label>Status
-            <select name="status">
-                <option value="">Not closed</option>
-                <option value="all"<?= $sel($f['status'], 'all') ?>>All</option>
-                <?php foreach ($statuses as $k => $l): ?><option value="<?= e($k) ?>"<?= $sel($f['status'], $k) ?>><?= e($l) ?></option><?php endforeach; ?>
-            </select>
-        </label>
-        <label>Urgency
-            <select name="urgency">
-                <option value="">Any</option>
-                <?php foreach ($urgencies as $k => $l): ?><option value="<?= e($k) ?>"<?= $sel($f['urgency'], $k) ?>><?= e($l) ?></option><?php endforeach; ?>
-            </select>
-        </label>
-        <label>Category
-            <select name="category">
-                <option value="">Any</option>
-                <?php foreach ($categories as $c): ?><option value="<?= (int) $c['id'] ?>"<?= $sel($f['category'], $c['id']) ?>><?= e($c['name']) ?></option><?php endforeach; ?>
-            </select>
-        </label>
-        <label>Label
-            <select name="label">
-                <option value="">Any</option>
-                <?php foreach ($labels as $l): ?><option value="<?= (int) $l['id'] ?>"<?= $sel($f['label'], $l['id']) ?>><?= e($l['name']) ?></option><?php endforeach; ?>
-            </select>
-        </label>
-        <label>Assignee
-            <select name="assignee">
-                <option value="">Anyone</option>
-                <option value="me"<?= $sel($f['assignee'], 'me') ?>>Assigned to me</option>
-                <option value="none"<?= $sel($f['assignee'], 'none') ?>>Unassigned</option>
-                <?php foreach ($assignees as $a): ?><option value="<?= (int) $a['id'] ?>"<?= $sel($f['assignee'], $a['id']) ?>><?= e($a['name']) ?></option><?php endforeach; ?>
-            </select>
-        </label>
-        <label>Search
-            <input name="q" value="<?= e($f['q']) ?>" maxlength="100" placeholder="Ticket, name, email, order">
-        </label>
-        <button class="btn" type="submit">Filter</button>
-    </form>
 
     <div class="ws" data-ws="1" data-active="<?= $active ? '1' : '0' ?>">
         <aside class="ws-list" aria-label="Tickets">
+            <details class="ws-filters">
+                <summary>Filters</summary>
+        <form method="get" action="<?= e(url($base . '/tickets')) ?>" class="inbox-filters">
+            <label>Status
+                <select name="status">
+                    <option value="">Not closed</option>
+                    <option value="all"<?= $sel($f['status'], 'all') ?>>All</option>
+                    <?php foreach ($statuses as $k => $l): ?><option value="<?= e($k) ?>"<?= $sel($f['status'], $k) ?>><?= e($l) ?></option><?php endforeach; ?>
+                </select>
+            </label>
+            <label>Urgency
+                <select name="urgency">
+                    <option value="">Any</option>
+                    <?php foreach ($urgencies as $k => $l): ?><option value="<?= e($k) ?>"<?= $sel($f['urgency'], $k) ?>><?= e($l) ?></option><?php endforeach; ?>
+                </select>
+            </label>
+            <label>Category
+                <select name="category">
+                    <option value="">Any</option>
+                    <?php foreach ($categories as $c): ?><option value="<?= (int) $c['id'] ?>"<?= $sel($f['category'], $c['id']) ?>><?= e($c['name']) ?></option><?php endforeach; ?>
+                </select>
+            </label>
+            <label>Label
+                <select name="label">
+                    <option value="">Any</option>
+                    <?php foreach ($labels as $l): ?><option value="<?= (int) $l['id'] ?>"<?= $sel($f['label'], $l['id']) ?>><?= e($l['name']) ?></option><?php endforeach; ?>
+                </select>
+            </label>
+            <label>Assignee
+                <select name="assignee">
+                    <option value="">Anyone</option>
+                    <option value="me"<?= $sel($f['assignee'], 'me') ?>>Assigned to me</option>
+                    <option value="none"<?= $sel($f['assignee'], 'none') ?>>Unassigned</option>
+                    <?php foreach ($assignees as $a): ?><option value="<?= (int) $a['id'] ?>"<?= $sel($f['assignee'], $a['id']) ?>><?= e($a['name']) ?></option><?php endforeach; ?>
+                </select>
+            </label>
+            <label>Search
+                <input name="q" value="<?= e($f['q']) ?>" maxlength="100" placeholder="Ticket, name, email, order">
+            </label>
+            <button class="btn" type="submit">Filter</button>
+        </form>
+            </details>
             <div class="ws-tools">
                 <div class="ws-search">
                     <input type="search" placeholder="Search this list" aria-label="Search this list" data-ws-search>
