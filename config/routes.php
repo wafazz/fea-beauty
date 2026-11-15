@@ -62,6 +62,14 @@ return function (Router $r): void {
         $r->post('/order/{orderNo}/{token}/cancel', 'Shop/OrderTrackController@cancel');
         $r->post('/order/{orderNo}/{token}/return', 'Shop/OrderTrackController@requestReturn', ['module:returns']);
         $r->post('/order/{orderNo}/{token}/support', 'Shop/OrderTrackController@support', ['module:support']);
+        // Support tickets for guests (the emailed link carries the ticket number and a secret token).
+        $r->get('/support/new', 'Shop/SupportTicketController@create', ['module:support']);
+        $r->post('/support', 'Shop/SupportTicketController@store', ['module:support']);
+        $r->get('/support/t/{ticketNo}/{token}', 'Shop/SupportTicketController@show', ['module:support']);
+        $r->post('/support/t/{ticketNo}/{token}/messages', 'Shop/SupportTicketController@reply', ['module:support']);
+        $r->post('/support/t/{ticketNo}/{token}/resolve', 'Shop/SupportTicketController@resolve', ['module:support']);
+        $r->get('/support/t/{ticketNo}/{token}/messages', 'Shop/SupportTicketController@poll', ['module:support']);
+        $r->get('/support/t/{ticketNo}/{token}/attachments/{id}', 'Shop/SupportTicketController@attachment', ['module:support']);
         $r->post('/order/{orderNo}/{token}/receipt', 'Shop/OrderTrackController@receipt');
         $r->get('/order/{orderNo}/{token}/receipt/{id}', 'Shop/OrderTrackController@receiptFile');
         $r->get('/order/{orderNo}/{token}/invoice', 'Shop/InvoiceController@guest');
@@ -423,6 +431,15 @@ return function (Router $r): void {
             $r->post('/addresses/{id}/default', 'Member/AddressController@makeDefault');
             $r->post('/addresses/{id}/delete', 'Member/AddressController@destroy');
             $r->get('/wishlist', 'Member/WishlistController@index');
+            // Support tickets (order of routes matters: "new" must stay above {ticketNo}).
+            $r->get('/support', 'Member/SupportTicketController@index', ['module:support']);
+            $r->get('/support/new', 'Member/SupportTicketController@create', ['module:support']);
+            $r->post('/support', 'Member/SupportTicketController@store', ['module:support']);
+            $r->get('/support/{ticketNo}', 'Member/SupportTicketController@show', ['module:support']);
+            $r->post('/support/{ticketNo}/messages', 'Member/SupportTicketController@reply', ['module:support']);
+            $r->post('/support/{ticketNo}/resolve', 'Member/SupportTicketController@resolve', ['module:support']);
+            $r->get('/support/{ticketNo}/messages', 'Member/SupportTicketController@poll', ['module:support']);
+            $r->get('/support/{ticketNo}/attachments/{id}', 'Member/SupportTicketController@attachment', ['module:support']);
         });
     });
 };
