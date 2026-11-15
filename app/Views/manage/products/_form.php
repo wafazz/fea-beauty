@@ -4,6 +4,8 @@ $dt = fn(?string $v) => $v ? date('Y-m-d\TH:i', strtotime($v)) : '';
 $type = old('product_type', $productType ?? 'single') === 'variable' ? 'variable' : 'single';
 $vrows = ($variantRows ?? []) !== [] ? $variantRows : [['id' => 0, 'sku' => '', 'option' => '', 'value' => '', 'price' => '', 'stock' => 0]];
 $kind = old('product_kind', ($product['product_type'] ?? 'physical') === 'digital' ? 'digital' : 'physical');
+// The digital option is hidden while the module is off. A product that is already digital keeps the option, so saving it does not turn it physical.
+$digitalOn = \App\Services\Modules::enabled('digital_products') || $kind === 'digital';
 $delivery = old('digital_delivery', (string) ($product['digital_delivery'] ?? 'file'));
 $productId = (int) ($product['id'] ?? 0);
 ?>
@@ -19,7 +21,9 @@ $productId = (int) ($product['id'] ?? 0);
     <fieldset class="ptype" data-product-kind>
         <legend>Product kind</legend>
         <label class="radio"><input type="radio" name="product_kind" value="physical" <?= $kind === 'physical' ? 'checked' : '' ?>> Physical (shipped, postage by weight and zone)</label>
+        <?php if ($digitalOn): ?>
         <label class="radio"><input type="radio" name="product_kind" value="digital" <?= $kind === 'digital' ? 'checked' : '' ?>> Digital (no postage, delivered after payment)</label>
+        <?php endif; ?>
     </fieldset>
     <fieldset class="ptype" data-digital-only style="grid-column:1/-1">
         <legend>Digital delivery</legend>
