@@ -321,6 +321,55 @@
     });
   }
 
+  // Emoji: a panel of common emojis. A tap inserts the emoji where the text cursor is, and the box keeps focus.
+  var EMOJIS = ['😀','😃','😄','😁','😊','🙂','😉','😍','🥰','😘','😂','🤣','😅','😢','😭','😡','🙏','👍','👎','👏','🙌','💪','🤝','👌','✌️','❤️','💔','🔥','✨','🎉','🎁','📦','🚚','✅','❌','⚠️','❓','❗','💡','📷','📎','📝','🛒','💰','⏰','📞','📧','👋'];
+  var emojiBtn = composer ? composer.querySelector('[data-emoji-toggle]') : null;
+  var emojiPanel = composer ? composer.querySelector('[data-emoji-panel]') : null;
+  var emojiBuilt = false;
+
+  function insertAtCursor(text) {
+    if (!body) return;
+    var start = body.selectionStart, end = body.selectionEnd;
+    if (start == null) { start = end = body.value.length; }
+    var next = body.value.slice(0, start) + text + body.value.slice(end);
+    if (next.length > body.maxLength && body.maxLength > 0) { setFeedback('That would be too long for one message.', true); return; }
+    body.value = next;
+    var pos = start + text.length;
+    body.focus();
+    body.setSelectionRange(pos, pos);
+  }
+
+  function closeEmoji() {
+    if (!emojiPanel) return;
+    emojiPanel.hidden = true;
+    if (emojiBtn) emojiBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  if (emojiBtn && emojiPanel) {
+    emojiBtn.addEventListener('mousedown', function (e) { e.preventDefault(); }); // keep the text cursor where it was
+    emojiBtn.addEventListener('click', function () {
+      if (!emojiBuilt) {
+        EMOJIS.forEach(function (ch) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = ch;
+          b.setAttribute('aria-label', 'Insert ' + ch);
+          b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+          b.addEventListener('click', function () { insertAtCursor(ch); });
+          emojiPanel.appendChild(b);
+        });
+        emojiBuilt = true;
+      }
+      var open = emojiPanel.hidden;
+      emojiPanel.hidden = !open;
+      emojiBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) {
+      if (!emojiPanel.hidden && !emojiPanel.contains(e.target) && e.target !== emojiBtn) closeEmoji();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeEmoji(); });
+  }
+
   if (resolveForm) {
     resolveForm.addEventListener('submit', function (e) {
       e.preventDefault();

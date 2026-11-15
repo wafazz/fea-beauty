@@ -60,6 +60,13 @@ $showReply = $staffView ? true : $canReply;
   .sc-note { padding: 10px 14px; font-size: .85rem; color: var(--sc-muted); background: var(--sc-shop); border-top: 1px solid var(--sc-line); }
   .sc-resolve { background: none; border: 1px solid var(--sc-line); border-radius: 8px; padding: 6px 10px; color: inherit; cursor: pointer; min-height: 36px; }
   .sc-send[disabled] { opacity: .6; cursor: progress; }
+  .sc-composer { position: relative; }
+  .sc-emoji-btn { min-width: 40px; min-height: 40px; border-radius: 10px; border: 1px solid var(--sc-line); background: none; cursor: pointer; font-size: 1.15rem; line-height: 1; }
+  .sc-emoji-btn[aria-expanded="true"] { border-color: #2563eb; }
+  .sc-emoji-panel { position: absolute; left: 10px; right: 10px; bottom: calc(100% - 4px); z-index: 2; background: var(--sc-shop); border: 1px solid var(--sc-line); border-radius: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.18); display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 4px; max-height: 180px; overflow-y: auto; }
+  .sc-emoji-panel[hidden] { display: none; }
+  .sc-emoji-panel button { min-height: 38px; border: 0; background: none; border-radius: 8px; cursor: pointer; font-size: 1.25rem; line-height: 1; }
+  .sc-emoji-panel button:hover, .sc-emoji-panel button:focus-visible { background: rgba(37, 99, 235, .12); outline: none; }
   /* Attachment viewer popup: images and PDFs open here instead of a new tab. */
   .ws-viewer { border: 0; border-radius: 16px; padding: 0; background: #fff; color: #111827; box-shadow: 0 20px 60px rgba(0, 0, 0, .35); width: min(960px, calc(100vw - 24px)); height: min(88vh, 900px); max-height: none; }
   /* Flex only while open: a closed dialog must stay hidden (display set here would show it at the bottom of the page). */
@@ -145,10 +152,12 @@ $showReply = $staffView ? true : $canReply;
         <?= field_error('form') ?>
         <?= field_error('attachments') ?>
         <textarea name="body" maxlength="2000" placeholder="<?= $staffView ? 'Reply to the customer, or write an internal note' : 'Type a message' ?>" aria-label="Message" data-body><?= old('body') ?></textarea>
+        <div class="sc-emoji-panel" data-emoji-panel hidden role="dialog" aria-label="Emoji"></div>
         <div class="sc-files" data-file-list aria-live="polite"></div>
         <div class="sc-row-actions">
             <input type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" aria-label="Attach files (up to 3, 5 MB each)" data-files>
             <span style="display:flex;gap:8px;align-items:center">
+                <button type="button" class="sc-emoji-btn" data-emoji-toggle aria-label="Add emoji" aria-expanded="false" title="Add emoji">😊</button>
                 <?php if ($staffView): ?>
                 <button class="sc-resolve" type="submit" formaction="<?= e($urls['note']) ?>" data-note title="Only staff can see this">Internal note</button>
                 <?php endif; ?>
