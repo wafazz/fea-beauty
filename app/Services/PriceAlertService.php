@@ -38,6 +38,9 @@ final class PriceAlertService
     /** Queue job: email each waiting address whose target the current price has reached. */
     public static function notify(int $productId): bool
     {
+        if (!Modules::enabled('price_alerts')) {
+            return true; // module off: send nothing; the alerts stay for when it is back on
+        }
         $product = Product::findActive($productId);
         if ($product === null) {
             return true;

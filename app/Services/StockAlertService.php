@@ -52,6 +52,9 @@ final class StockAlertService
     /** Queue job: email everyone waiting. Each address is marked notified only after its email is accepted. */
     public static function notify(int $productId, int $variantKey): bool
     {
+        if (!Modules::enabled('back_in_stock')) {
+            return true; // module off: send nothing; the alerts stay for when it is back on
+        }
         if (self::stockOf($productId, $variantKey) <= 0) {
             return true; // sold out again before the job ran: keep the alerts for the next restock
         }
