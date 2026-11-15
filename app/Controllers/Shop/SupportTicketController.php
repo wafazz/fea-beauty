@@ -51,6 +51,7 @@ final class SupportTicketController extends Controller
             $this->backWithErrors('/support/new', ['attachments' => $e->getMessage()], $request->body);
         }
 
+        try {
         $result = SupportTicketService::create([
             'category_id' => $request->str('category_id'),
             'urgency' => $request->str('urgency'),
@@ -58,6 +59,9 @@ final class SupportTicketController extends Controller
             'body' => $request->str('body'),
             'order_id' => $orderId,
         ], $files, null, $request->str('email'));
+        } catch (\RuntimeException $e) {
+            $this->backWithErrors('/support/new', ['form' => SupportAttachmentService::saveFailed($e)], $request->body);
+        }
         if (!$result['ok']) {
             $this->backWithErrors('/support/new', ['form' => $result['error']], $request->body);
         }
@@ -91,7 +95,11 @@ final class SupportTicketController extends Controller
         } catch (\InvalidArgumentException $e) {
             $this->backWithErrors($back, ['attachments' => $e->getMessage()]);
         }
-        $error = SupportTicketService::reply($ticket, $request->str('body'), $files);
+        try {
+            $error = SupportTicketService::reply($ticket, $request->str('body'), $files);
+        } catch (\RuntimeException $e) {
+            $this->backWithErrors($back, ['form' => SupportAttachmentService::saveFailed($e)]);
+        }
         if ($error !== null) {
             $this->backWithErrors($back, ['form' => $error]);
         }

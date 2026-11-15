@@ -16,6 +16,16 @@ final class SupportAttachmentService
 
     private const TYPES = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'application/pdf' => 'pdf'];
 
+    /** What the customer sees when a file cannot be saved on the server (the detail goes to the app log). */
+    public const SAVE_FAILED = 'The file could not be saved on the server. Try again, or send a smaller file. If it keeps happening, the shop needs to check that the support folder can be written to.';
+
+    /** Log why a save failed and return the text to show. @return string */
+    public static function saveFailed(\Throwable $e): string
+    {
+        @file_put_contents(BASE_PATH . '/storage/logs/app.log', '[' . date('c') . '] support attachment: ' . $e->getMessage() . ' (check that storage/support can be written to by the web server user)' . "\n", FILE_APPEND | LOCK_EX);
+        return self::SAVE_FAILED;
+    }
+
     public static function dir(): string
     {
         return BASE_PATH . '/storage/support';
