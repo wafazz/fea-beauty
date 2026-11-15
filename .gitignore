@@ -17,3 +17,5 @@ storage/receipts/*
 storage/backups/*
 !storage/backups/.gitkeep
 storage/installed.lock
+storage/support/*
+!storage/support/.gitkeep

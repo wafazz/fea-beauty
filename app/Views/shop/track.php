@@ -6,4 +6,7 @@
         <label>Email used at checkout <input type="email" name="email" autocomplete="email" required></label>
         <button class="s-btn lg block">Find my order</button>
     </form>
+    <?php if (\App\Services\Modules::enabled('support')): ?>
+    <p class="muted" style="text-align:center;margin-top:12px">Need help? <a href="<?= e(url('/support/new')) ?>">Contact support</a></p>
+    <?php endif; ?>
 </div>
