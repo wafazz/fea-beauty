@@ -40,6 +40,13 @@ $showReply = $staffView ? true : $canReply;
   .sc-time { font-size: .68rem; color: var(--sc-muted); text-align: right; margin-top: 2px; }
   .sc-img { display: block; max-width: 220px; max-height: 220px; border-radius: 6px; margin-bottom: 4px; }
   .sc-file { display: block; font-size: .9rem; margin-bottom: 4px; color: inherit; }
+  /* A file in a message: a card with its type, name and size. Tap to preview in the popup. */
+  .sc-file-card { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; padding: 8px; border-radius: 10px; border: 1px solid var(--sc-line); background: rgba(127, 127, 127, .06); color: inherit; text-decoration: none; min-width: 200px; max-width: 320px; }
+  .sc-file-card:hover { border-color: #2563eb; }
+  .sc-file-ico { flex: none; width: 40px; height: 48px; border-radius: 6px; display: grid; place-items: center; background: #dc2626; color: #fff; font-size: .72rem; font-weight: 700; letter-spacing: .03em; }
+  .sc-file-meta { display: grid; gap: 2px; min-width: 0; }
+  .sc-file-meta strong { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sc-file-meta small { font-size: .74rem; color: var(--sc-muted); }
   .sc-composer { border-top: 1px solid var(--sc-line); background: var(--sc-shop); padding: 10px; display: grid; gap: 8px; }
   .sc-composer textarea { width: 100%; min-height: 56px; resize: vertical; border-radius: 8px; border: 1px solid var(--sc-line); padding: 8px; font: inherit; background: transparent; color: inherit; box-sizing: border-box; }
   .sc-composer .sc-row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
@@ -115,7 +122,14 @@ $showReply = $staffView ? true : $canReply;
                         <?php if (str_starts_with((string) $a['mime'], 'image/')): ?>
                             <a href="<?= e($url) ?>" data-attach-view="<?= e($a['original_name']) ?>"><img class="sc-img" src="<?= e($url) ?>" alt="<?= e($a['original_name']) ?>"></a>
                         <?php else: ?>
-                            <a class="sc-file" href="<?= e($url) ?>" data-attach-view="<?= e($a['original_name']) ?>">Attachment: <?= e($a['original_name']) ?></a>
+                            <?php $isPdf = $a['mime'] === 'application/pdf'; $bytes = (int) ($a['size'] ?? 0); ?>
+                            <a class="sc-file-card" href="<?= e($url) ?>" data-attach-view="<?= e($a['original_name']) ?>" title="Tap to preview">
+                                <span class="sc-file-ico" aria-hidden="true"><?= $isPdf ? 'PDF' : 'FILE' ?></span>
+                                <span class="sc-file-meta">
+                                    <strong><?= e($a['original_name']) ?></strong>
+                                    <small><?= $isPdf ? 'PDF' : 'File' ?> · <?= $bytes >= 1048576 ? e(number_format($bytes / 1048576, 1)) . ' MB' : e((string) max(1, (int) round($bytes / 1024))) . ' KB' ?> · Tap to preview</small>
+                                </span>
+                            </a>
                         <?php endif; ?>
                     <?php endforeach; ?>
                     <?php if ((string) $m['body'] !== ''): ?><div class="sc-text"><?= nl2br(e((string) $m['body'])) ?></div><?php endif; ?>

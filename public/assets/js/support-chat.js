@@ -141,7 +141,16 @@
         var img = el('img', 'sc-img'); img.src = url; img.alt = a.original_name; link.appendChild(img);
         b.appendChild(link);
       } else {
-        var f = el('a', 'sc-file', 'Attachment: ' + a.original_name); f.href = url; f.setAttribute('data-attach-view', a.original_name); b.appendChild(f);
+        var isPdf = a.mime === 'application/pdf';
+        var card = el('a', 'sc-file-card'); card.href = url; card.title = 'Tap to preview';
+        card.setAttribute('data-attach-view', a.original_name);
+        var ico = el('span', 'sc-file-ico', isPdf ? 'PDF' : 'FILE'); ico.setAttribute('aria-hidden', 'true');
+        var meta = el('span', 'sc-file-meta');
+        meta.appendChild(el('strong', null, a.original_name));
+        var size = Number(a.size || 0);
+        var sizeText = size >= 1048576 ? (size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(size / 1024)) + ' KB';
+        meta.appendChild(el('small', null, (isPdf ? 'PDF' : 'File') + ' · ' + sizeText + ' · Tap to preview'));
+        card.appendChild(ico); card.appendChild(meta); b.appendChild(card);
       }
     });
     if (m.body) b.appendChild(el('div', 'sc-text', m.body));
