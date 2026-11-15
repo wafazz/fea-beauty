@@ -126,10 +126,11 @@ final class SupportInboxController extends Controller
     public function poll(Request $request, string $ticketNo): void
     {
         $ticket = $this->ticket($ticketNo);
-        Response::json([
-            'status' => $ticket['status'],
-            'messages' => SupportTicketService::messagesAfter((int) $ticket['id'], max(0, (int) $request->str('after')), true),
-        ]);
+        $messages = SupportTicketService::messagesAfter((int) $ticket['id'], max(0, (int) $request->str('after')), true);
+        if ($messages !== []) {
+            SupportInboxService::markRead((int) $ticket['id']); // staff is looking at the chat
+        }
+        Response::json(['status' => $ticket['status'], 'messages' => $messages]);
     }
 
     public function attachment(Request $request, string $ticketNo, string $id): void
@@ -157,6 +158,7 @@ final class SupportInboxController extends Controller
             'tickets' => SupportInboxService::list($filters, $this->me()),
             'active' => $active,
             'isAdmin' => $this->isAdmin(),
+            'meId' => $this->me(),
             'urgencies' => SupportTicketService::URGENCIES,
             'statuses' => SupportInboxService::STATUSES,
             'categories' => SupportTaxonomy::categories(),

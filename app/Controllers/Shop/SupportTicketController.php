@@ -108,10 +108,11 @@ final class SupportTicketController extends Controller
     public function poll(Request $request, string $ticketNo, string $token): void
     {
         $ticket = $this->guest($ticketNo, $token);
-        Response::json([
-            'status' => $ticket['status'],
-            'messages' => SupportTicketService::messagesAfter((int) $ticket['id'], max(0, (int) $request->str('after'))),
-        ]);
+        $messages = SupportTicketService::messagesAfter((int) $ticket['id'], max(0, (int) $request->str('after')));
+        if ($messages !== []) {
+            SupportTicketService::markRead($ticket);
+        }
+        Response::json(['status' => $ticket['status'], 'messages' => $messages]);
     }
 
     public function attachment(Request $request, string $ticketNo, string $token, string $id): void

@@ -1,35 +1,46 @@
 <?php
 /**
- * Support inbox. Expects: $base, $filters, $tickets, $active (ticket detail or null), $isAdmin, $urgencies, $statuses,
- * $categories, $labels (all), $assignees, $slaHours.
+ * Support inbox: ticket list and chat side by side (stacked on phones). Expects: $base, $filters, $tickets,
+ * $active (ticket detail or null), $isAdmin, $meId, $urgencies, $statuses, $categories, $labels, $assignees, $slaHours.
  */
+use App\Services\SupportInboxService;
+use App\Services\SupportTicketService;
+
 $f = $filters;
 $base = $base ?? '/admin';
 $ticketUrl = fn(string $no) => url($base . '/tickets/' . $no);
 $sel = fn($a, $b) => (string) $a === (string) $b ? ' selected' : '';
+$overdueCount = count(array_filter($tickets, fn($t) => $t['overdue']));
+$unreadCount = count(array_filter($tickets, fn($t) => $t['unread']));
+$urgentCount = count(array_filter($tickets, fn($t) => $t['urgency'] === 'urgent'));
+$mineCount = count(array_filter($tickets, fn($t) => (int) $t['assignee_id'] === (int) $meId));
+$unassignedCount = count(array_filter($tickets, fn($t) => $t['assignee_id'] === null));
 ?>
+<link rel="stylesheet" href="<?= e(asset('css/support-workspace.css')) ?>">
 <style>
+  /* The filter bar sits above the workspace, so the workspace gets less height than on the member page. */
+  .ws { height: calc(100vh - 300px); min-height: 480px; }
+  @media (max-width: 899px) { .ws { height: auto; min-height: 0; } }
   .inbox-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 12px; }
   .inbox-filters label { display: grid; gap: 4px; font-size: .8rem; }
-  .inbox-filters input, .inbox-filters select { min-width: 120px; }
-  .inbox-grid { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 12px; align-items: start; }
-  @media (max-width: 900px) { .inbox-grid { grid-template-columns: 1fr; } }
-  .inbox-list { border: 1px solid var(--line, #d1d7db); border-radius: 10px; overflow: hidden; background: var(--card, #fff); }
+  .inbox-filters input, .inbox-filters select { min-width: 120px; min-height: 40px; }
   .inbox-bulk { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px; border-bottom: 1px solid var(--line, #d1d7db); }
-  .inbox-row { display: grid; grid-template-columns: auto 1fr; gap: 8px; padding: 10px; border-bottom: 1px solid var(--line, #d1d7db); }
-  .inbox-row.active { background: rgba(37, 99, 235, .08); }
-  .inbox-row a { color: inherit; text-decoration: none; display: block; }
-  .inbox-top { display: flex; justify-content: space-between; gap: 6px; }
-  .inbox-sub { font-size: .8rem; color: var(--muted, #667781); margin-top: 3px; }
+  .inbox-row { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; padding: 10px 12px; min-height: 44px; border-bottom: 1px solid var(--line, #d1d7db); }
+  .inbox-row.is-active { background: rgba(37, 99, 235, .10); box-shadow: inset 3px 0 0 var(--accent, #2563eb); }
+  .inbox-row input[type="checkbox"] { margin-top: 4px; width: 18px; height: 18px; }
+  .inbox-row a { color: inherit; text-decoration: none; display: block; min-width: 0; }
+  .inbox-top { display: flex; justify-content: space-between; gap: 6px; min-width: 0; }
+  .inbox-top strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .inbox-sub { font-size: .8rem; color: var(--muted, #667781); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .inbox-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
   .chip { font-size: .72rem; padding: 1px 7px; border-radius: 999px; color: #fff; }
-  .badge-overdue { font-size: .72rem; color: #fff; background: #d92d20; padding: 1px 7px; border-radius: 999px; }
-  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2563eb; margin-right: 4px; }
-  .inbox-panel { border: 1px solid var(--line, #d1d7db); border-radius: 10px; padding: 12px; margin-top: 12px; display: grid; gap: 10px; background: var(--card, #fff); }
+  .badge-overdue { font-size: .72rem; color: #fff; background: #d92d20; padding: 1px 7px; border-radius: 999px; flex: none; }
+  .inbox-panel { border: 1px solid var(--line, #d1d7db); border-radius: 12px; padding: 12px; display: grid; gap: 10px; background: var(--card, #fff); }
   .inbox-panel h3 { margin: 0; font-size: .95rem; }
   .inbox-panel form { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .inbox-panel .k { font-size: .78rem; color: var(--muted, #667781); }
-  .inbox-empty { padding: 40px 16px; text-align: center; color: var(--muted, #667781); border: 1px dashed var(--line, #d1d7db); border-radius: 10px; }
+  .inbox-panel select, .inbox-panel button { min-height: 40px; }
+  .inbox-empty { padding: 40px 16px; text-align: center; color: var(--muted, #667781); }
 </style>
 
 <div class="msg-page">
@@ -81,8 +92,22 @@ $sel = fn($a, $b) => (string) $a === (string) $b ? ' selected' : '';
         <button class="btn" type="submit">Filter</button>
     </form>
 
-    <div class="inbox-grid">
-        <section class="inbox-list" aria-label="Tickets">
+    <div class="ws" data-ws="1" data-active="<?= $active ? '1' : '0' ?>">
+        <aside class="ws-list" aria-label="Tickets">
+            <div class="ws-tools">
+                <div class="ws-search">
+                    <input type="search" placeholder="Search this list" aria-label="Search this list" data-ws-search>
+                </div>
+                <div class="ws-chips" role="group" aria-label="Quick filters">
+                    <button type="button" class="ws-chip" data-ws-filter="all" aria-pressed="true">All <span class="ws-count"><?= count($tickets) ?></span></button>
+                    <button type="button" class="ws-chip" data-ws-filter="unread" aria-pressed="false">Unread <span class="ws-count"><?= $unreadCount ?></span></button>
+                    <button type="button" class="ws-chip" data-ws-filter="overdue" aria-pressed="false">Overdue <span class="ws-count"><?= $overdueCount ?></span></button>
+                    <button type="button" class="ws-chip" data-ws-filter="urgent" aria-pressed="false">Urgent <span class="ws-count"><?= $urgentCount ?></span></button>
+                    <button type="button" class="ws-chip" data-ws-filter="mine" aria-pressed="false">Mine <span class="ws-count"><?= $mineCount ?></span></button>
+                    <button type="button" class="ws-chip" data-ws-filter="unassigned" aria-pressed="false">Unassigned <span class="ws-count"><?= $unassignedCount ?></span></button>
+                </div>
+            </div>
+
             <form method="post" action="<?= e(url($base . '/tickets/bulk')) ?>" id="inbox-bulk">
                 <?= csrf_field() ?>
                 <div class="inbox-bulk">
@@ -102,124 +127,143 @@ $sel = fn($a, $b) => (string) $a === (string) $b ? ' selected' : '';
                     <button class="btn secondary" type="submit">Apply to selected</button>
                 </div>
 
-                <?php if ($tickets === []): ?>
-                    <p class="muted" style="padding:14px">No tickets match these filters.</p>
-                <?php endif; ?>
-                <?php foreach ($tickets as $t): ?>
-                <div class="inbox-row<?= $active && $active['ticket_no'] === $t['ticket_no'] ? ' active' : '' ?>">
-                    <input type="checkbox" name="ids[]" value="<?= (int) $t['id'] ?>" aria-label="Select <?= e($t['ticket_no']) ?>">
-                    <a href="<?= e($ticketUrl($t['ticket_no'])) ?>">
-                        <div class="inbox-top">
-                            <strong><?php if ($t['unread']): ?><span class="dot" aria-label="Unread"></span><?php endif; ?><?= e($t['subject']) ?></strong>
-                            <?php if ($t['overdue']): ?><span class="badge-overdue">Overdue</span><?php endif; ?>
+                <div class="ws-items" data-ws-items>
+                    <?php foreach ($tickets as $t):
+                        $flags = [];
+                        if ($t['unread']) $flags[] = 'unread';
+                        if ($t['overdue']) $flags[] = 'overdue';
+                        if ($t['urgency'] === 'urgent') $flags[] = 'urgent';
+                        if ((int) $t['assignee_id'] === (int) $meId) $flags[] = 'mine';
+                        if ($t['assignee_id'] === null) $flags[] = 'unassigned';
+                        if ($t['status'] === 'resolved') $flags[] = 'resolved';
+                        $isActive = $active && $active['ticket_no'] === $t['ticket_no'];
+                    ?>
+                    <div class="inbox-row<?= $isActive ? ' is-active' : '' ?>" data-ws-row data-flags="<?= e(implode(' ', $flags)) ?>">
+                        <input type="checkbox" name="ids[]" value="<?= (int) $t['id'] ?>" aria-label="Select <?= e($t['ticket_no']) ?>">
+                        <a href="<?= e($ticketUrl($t['ticket_no'])) ?>"<?= $isActive ? ' aria-current="true"' : '' ?>>
+                            <div class="inbox-top">
+                                <strong><?php if ($t['unread']): ?><span class="ws-dot" aria-label="Unread"></span><?php endif; ?><?= e($t['subject']) ?></strong>
+                                <?php if ($t['overdue']): ?><span class="badge-overdue">Overdue</span><?php endif; ?>
+                            </div>
+                            <div class="inbox-sub">
+                                <?= e($t['ticket_no']) ?> · <?= e($t['customer_name'] ?: ($t['guest_email'] ?: 'Guest')) ?>
+                                · <?= e(SupportTicketService::URGENCIES[$t['urgency']] ?? $t['urgency']) ?>
+                                · <?= e(SupportInboxService::STATUSES[$t['status']] ?? $t['status']) ?>
+                            </div>
+                            <div class="inbox-sub">
+                                <?= e($t['category_name']) ?><?php if (!empty($t['order_no'])): ?> · <?= e($t['order_no']) ?><?php endif; ?>
+                                <?php if ($t['assignee_name']): ?> · <?= e($t['assignee_name']) ?><?php endif; ?>
+                                · <?= e(date('j M, H:i', strtotime((string) $t['last_message_at']))) ?>
+                            </div>
+                            <?php if ($t['labels'] !== []): ?>
+                            <div class="inbox-chips">
+                                <?php foreach ($t['labels'] as $l): ?><span class="chip" style="background:<?= e($l['colour']) ?>"><?= e($l['name']) ?></span><?php endforeach; ?>
+                            </div>
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </form>
+            <?php if ($tickets === []): ?>
+                <p class="ws-none">No tickets match these filters.</p>
+            <?php endif; ?>
+            <p class="ws-none" data-ws-none hidden>No tickets match the quick filter or search.</p>
+        </aside>
+
+        <section class="ws-main" aria-live="polite" aria-label="Ticket">
+            <?php if ($active === null): ?>
+                <div class="ws-empty">
+                    <h2>Choose a ticket</h2>
+                    <p>Pick a ticket on the left to read it and reply.</p>
+                </div>
+            <?php else: ?>
+                <div class="ws-main-inner">
+                    <a class="ws-back" href="<?= e(url($base . '/tickets')) ?>">← All tickets</a>
+                    <?php
+                    $urls = [
+                        'post' => url($base . '/tickets/' . $active['ticket_no'] . '/reply'),
+                        'note' => url($base . '/tickets/' . $active['ticket_no'] . '/note'),
+                        'poll' => url($base . '/tickets/' . $active['ticket_no'] . '/messages'),
+                        'attach' => url($base . '/tickets/' . $active['ticket_no'] . '/attachments/__ID__'),
+                        'resolve' => '',
+                    ];
+                    $messages = SupportTicketService::messagesAfter((int) $active['id'], 0, true);
+                    $ticket = $active;
+                    $canReply = true;
+                    $staffView = true;
+                    require BASE_PATH . '/app/Views/support/_chat.php';
+                    ?>
+
+                    <div class="inbox-panel">
+                        <div>
+                            <div class="k">Customer</div>
+                            <strong><?= e($active['customer_name'] ?: 'Guest') ?></strong>
+                            <div class="k"><?= e($active['customer_email'] ?: '—') ?></div>
                         </div>
-                        <div class="inbox-sub">
-                            <?= e($t['ticket_no']) ?> · <?= e($t['customer_name'] ?: ($t['guest_email'] ?: 'Guest')) ?>
-                            · <?= e(\App\Services\SupportTicketService::URGENCIES[$t['urgency']] ?? $t['urgency']) ?>
-                            · <?= e(\App\Services\SupportInboxService::STATUSES[$t['status']] ?? $t['status']) ?>
+                        <div>
+                            <div class="k">Category · created</div>
+                            <?= e($active['category_name']) ?> · <?= e(date('j M Y, H:i', strtotime((string) $active['created_at']))) ?>
                         </div>
-                        <div class="inbox-sub">
-                            <?= e($t['category_name']) ?><?php if (!empty($t['order_no'])): ?> · <?= e($t['order_no']) ?><?php endif; ?>
-                            <?php if ($t['assignee_name']): ?> · <?= e($t['assignee_name']) ?><?php endif; ?>
-                            · <?= e(date('j M, H:i', strtotime((string) $t['last_message_at']))) ?>
-                        </div>
-                        <?php if ($t['labels'] !== []): ?>
-                        <div class="inbox-chips">
-                            <?php foreach ($t['labels'] as $l): ?><span class="chip" style="background:<?= e($l['colour']) ?>"><?= e($l['name']) ?></span><?php endforeach; ?>
+                        <?php if ($active['order']): ?>
+                        <div>
+                            <div class="k">Order</div>
+                            <a href="<?= e(url($base . '/orders/' . (int) $active['order']['id'])) ?>"><?= e($active['order']['order_no']) ?></a>
+                            · <?= e($active['order']['status']) ?> · <?= e($active['order']['payment_status']) ?>
                         </div>
                         <?php endif; ?>
-                    </a>
-                </div>
-                <?php endforeach; ?>
-            </form>
-        </section>
+                        <?php if ($active['subscription']): ?>
+                        <div>
+                            <div class="k">Subscription</div>
+                            #<?= (int) $active['subscription']['id'] ?> · <?= e($active['subscription']['product_name']) ?> · <?= e($active['subscription']['status']) ?> · <?= e($active['subscription']['cadence']) ?>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($active['status'] === 'waiting_staff' && isset($slaHours[$active['urgency']]) && $active['last_customer_at']): ?>
+                        <div>
+                            <div class="k">Reply target</div>
+                            <?= e(date('j M, H:i', strtotime((string) $active['last_customer_at']) + $slaHours[$active['urgency']] * 3600)) ?>
+                            <?= $active['overdue'] ? ' <span class="badge-overdue">Overdue</span>' : '' ?>
+                        </div>
+                        <?php endif; ?>
 
-        <section aria-label="Ticket">
-            <?php if ($active === null): ?>
-                <div class="inbox-empty">Choose a ticket on the left to read it and reply.</div>
-            <?php else: ?>
-                <?php
-                $urls = [
-                    'post' => url($base . '/tickets/' . $active['ticket_no'] . '/reply'),
-                    'note' => url($base . '/tickets/' . $active['ticket_no'] . '/note'),
-                    'poll' => url($base . '/tickets/' . $active['ticket_no'] . '/messages'),
-                    'attach' => url($base . '/tickets/' . $active['ticket_no'] . '/attachments/__ID__'),
-                    'resolve' => '',
-                ];
-                $messages = \App\Services\SupportTicketService::messagesAfter((int) $active['id'], 0, true);
-                $ticket = $active;
-                $canReply = true;
-                $staffView = true;
-                require BASE_PATH . '/app/Views/support/_chat.php';
-                ?>
+                        <form method="post" action="<?= e(url($base . '/tickets/' . $active['ticket_no'] . '/status')) ?>">
+                            <?= csrf_field() ?>
+                            <span class="k" style="min-width:76px">Status</span>
+                            <select name="status"><?php foreach ($statuses as $k => $l): ?><option value="<?= e($k) ?>"<?= $sel($active['status'], $k) ?>><?= e($l) ?></option><?php endforeach; ?></select>
+                            <button class="btn secondary" type="submit">Save</button>
+                        </form>
 
-                <div class="inbox-panel">
-                    <div>
-                        <div class="k">Customer</div>
-                        <strong><?= e($active['customer_name'] ?: 'Guest') ?></strong>
-                        <div class="k"><?= e($active['customer_email'] ?: '—') ?></div>
+                        <form method="post" action="<?= e(url($base . '/tickets/' . $active['ticket_no'] . '/assign')) ?>">
+                            <?= csrf_field() ?>
+                            <span class="k" style="min-width:76px">Assignee</span>
+                            <select name="assignee"><option value="0">Nobody</option><?php foreach ($assignees as $a): ?><option value="<?= (int) $a['id'] ?>"<?= $sel($active['assignee_id'], $a['id']) ?>><?= e($a['name']) ?></option><?php endforeach; ?></select>
+                            <button class="btn secondary" type="submit">Save</button>
+                        </form>
+
+                        <?php if ($isAdmin): ?>
+                        <form method="post" action="<?= e(url($base . '/tickets/' . $active['ticket_no'] . '/urgency')) ?>">
+                            <?= csrf_field() ?>
+                            <span class="k" style="min-width:76px">Urgency</span>
+                            <select name="urgency"><?php foreach ($urgencies as $k => $l): ?><option value="<?= e($k) ?>"<?= $sel($active['urgency'], $k) ?>><?= e($l) ?></option><?php endforeach; ?></select>
+                            <button class="btn secondary" type="submit">Save</button>
+                        </form>
+                        <?php else: ?>
+                        <div><span class="k">Urgency</span> <?= e($urgencies[$active['urgency']] ?? $active['urgency']) ?> <span class="k">(set by an admin)</span></div>
+                        <?php endif; ?>
+
+                        <form method="post" action="<?= e(url($base . '/tickets/' . $active['ticket_no'] . '/labels')) ?>">
+                            <?= csrf_field() ?>
+                            <span class="k">Labels</span>
+                            <?php $on = array_map('intval', array_column($active['labels'], 'id')); ?>
+                            <?php foreach ($labels as $l): ?>
+                                <label class="check"><input type="checkbox" name="label_ids[]" value="<?= (int) $l['id'] ?>"<?= in_array((int) $l['id'], $on, true) ? ' checked' : '' ?>> <?= e($l['name']) ?></label>
+                            <?php endforeach; ?>
+                            <button class="btn secondary" type="submit">Save labels</button>
+                        </form>
                     </div>
-                    <div>
-                        <div class="k">Category · created</div>
-                        <?= e($active['category_name']) ?> · <?= e(date('j M Y, H:i', strtotime((string) $active['created_at']))) ?>
-                    </div>
-                    <?php if ($active['order']): ?>
-                    <div>
-                        <div class="k">Order</div>
-                        <a href="<?= e(url($base . '/orders/' . (int) $active['order']['id'])) ?>"><?= e($active['order']['order_no']) ?></a>
-                        · <?= e($active['order']['status']) ?> · <?= e($active['order']['payment_status']) ?>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($active['subscription']): ?>
-                    <div>
-                        <div class="k">Subscription</div>
-                        #<?= (int) $active['subscription']['id'] ?> · <?= e($active['subscription']['product_name']) ?> · <?= e($active['subscription']['status']) ?> · <?= e($active['subscription']['cadence']) ?>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($active['status'] === 'waiting_staff' && isset($slaHours[$active['urgency']]) && $active['last_customer_at']): ?>
-                    <div>
-                        <div class="k">Reply target</div>
-                        <?= e(date('j M, H:i', strtotime((string) $active['last_customer_at']) + $slaHours[$active['urgency']] * 3600)) ?>
-                        <?= $active['overdue'] ? ' <span class="badge-overdue">Overdue</span>' : '' ?>
-                    </div>
-                    <?php endif; ?>
-
-                    <form method="post" action="<?= e(url($base . '/tickets/' . $active['ticket_no'] . '/status')) ?>">
-                        <?= csrf_field() ?>
-                        <span class="k" style="min-width:70px">Status</span>
-                        <select name="status"><?php foreach ($statuses as $k => $l): ?><option value="<?= e($k) ?>"<?= $sel($active['status'], $k) ?>><?= e($l) ?></option><?php endforeach; ?></select>
-                        <button class="btn secondary" type="submit">Save</button>
-                    </form>
-
-                    <form method="post" action="<?= e(url($base . '/tickets/' . $active['ticket_no'] . '/assign')) ?>">
-                        <?= csrf_field() ?>
-                        <span class="k" style="min-width:70px">Assignee</span>
-                        <select name="assignee"><option value="0">Nobody</option><?php foreach ($assignees as $a): ?><option value="<?= (int) $a['id'] ?>"<?= $sel($active['assignee_id'], $a['id']) ?>><?= e($a['name']) ?></option><?php endforeach; ?></select>
-                        <button class="btn secondary" type="submit">Save</button>
-                    </form>
-
-                    <?php if ($isAdmin): ?>
-                    <form method="post" action="<?= e(url($base . '/tickets/' . $active['ticket_no'] . '/urgency')) ?>">
-                        <?= csrf_field() ?>
-                        <span class="k" style="min-width:70px">Urgency</span>
-                        <select name="urgency"><?php foreach ($urgencies as $k => $l): ?><option value="<?= e($k) ?>"<?= $sel($active['urgency'], $k) ?>><?= e($l) ?></option><?php endforeach; ?></select>
-                        <button class="btn secondary" type="submit">Save</button>
-                    </form>
-                    <?php else: ?>
-                    <div><span class="k">Urgency</span> <?= e($urgencies[$active['urgency']] ?? $active['urgency']) ?> <span class="k">(set by an admin)</span></div>
-                    <?php endif; ?>
-
-                    <form method="post" action="<?= e(url($base . '/tickets/' . $active['ticket_no'] . '/labels')) ?>">
-                        <?= csrf_field() ?>
-                        <span class="k">Labels</span>
-                        <?php $on = array_column($active['labels'], 'id'); ?>
-                        <?php foreach ($labels as $l): ?>
-                            <label class="check"><input type="checkbox" name="label_ids[]" value="<?= (int) $l['id'] ?>"<?= in_array((int) $l['id'], array_map('intval', $on), true) ? ' checked' : '' ?>> <?= e($l['name']) ?></label>
-                        <?php endforeach; ?>
-                        <button class="btn secondary" type="submit">Save labels</button>
-                    </form>
                 </div>
             <?php endif; ?>
         </section>
     </div>
 </div>
+<script src="<?= e(asset('js/support-workspace.js')) ?>" defer></script>
