@@ -63,11 +63,11 @@ final class UploadService
     {
         $ext = self::validate($file);
         $folder = BASE_PATH . '/public/uploads/' . $dir;
-        if (!is_dir($folder) && !mkdir($folder, 0755, true) && !is_dir($folder)) {
+        if (!is_dir($folder) && !@mkdir($folder, 0755, true) && !is_dir($folder)) {
             throw new \RuntimeException('Cannot create upload folder.');
         }
         $name = bin2hex(random_bytes(16)) . '.' . $ext;
-        if (!move_uploaded_file($file['tmp_name'], $folder . '/' . $name)) {
+        if (!@move_uploaded_file($file['tmp_name'], $folder . '/' . $name)) {
             throw new \RuntimeException('Cannot store upload.');
         }
         return "uploads/{$dir}/{$name}";

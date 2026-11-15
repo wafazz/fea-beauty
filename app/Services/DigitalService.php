@@ -69,7 +69,7 @@ final class DigitalService
             throw new \RuntimeException('The digital files folder cannot be created on the server.');
         }
         $stored = bin2hex(random_bytes(16));
-        if (!move_uploaded_file((string) $file['tmp_name'], $dir . '/' . $stored)) {
+        if (!@move_uploaded_file((string) $file['tmp_name'], $dir . '/' . $stored)) {
             throw new \RuntimeException('The digital files folder cannot be written to on the server.');
         }
         $name = preg_replace('/[\x00-\x1F\x7F]/', '', basename((string) $file['name'])) ?? '';

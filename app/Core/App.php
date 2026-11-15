@@ -87,6 +87,9 @@ final class App
         error_reporting(E_ALL);
 
         set_error_handler(static function (int $no, string $str, string $file, int $line): bool {
+            if (!(error_reporting() & $no)) {
+                return false; // silenced with @: let the caller check its return value instead
+            }
             throw new \ErrorException($str, 0, $no, $file, $line);
         });
 
