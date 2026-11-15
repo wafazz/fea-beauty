@@ -14,7 +14,7 @@ $selUrg = (string) old('urgency', 'normal');
         <?= field_error('form') ?>
 
         <label>Your email
-            <input type="email" name="email" value="<?= e(old('email')) ?>" autocomplete="email" maxlength="190" required>
+            <input type="email" name="email" value="<?= old('email') ?>" autocomplete="email" maxlength="190" required>
             <?= field_error('email') ?>
         </label>
 
@@ -37,18 +37,18 @@ $selUrg = (string) old('urgency', 'normal');
         </fieldset>
 
         <label>Subject
-            <input name="subject" maxlength="160" value="<?= e(old('subject')) ?>" required>
+            <input name="subject" maxlength="160" value="<?= old('subject') ?>" required>
             <?= field_error('subject') ?>
         </label>
 
         <label>Message
-            <textarea name="body" rows="5" maxlength="2000" required><?= e(old('body')) ?></textarea>
+            <textarea name="body" rows="5" maxlength="2000" required><?= old('body') ?></textarea>
             <?= field_error('body') ?>
         </label>
 
         <p class="muted">About an order? Add its number and tracking code from your order email (both, or leave both blank).</p>
         <label>Order number (optional)
-            <input name="order_no" value="<?= e(old('order_no')) ?>" placeholder="ORD-XXXXXXXXXX" autocomplete="off" maxlength="40">
+            <input name="order_no" value="<?= old('order_no') ?>" placeholder="ORD-XXXXXXXXXX" autocomplete="off" maxlength="40">
         </label>
         <label>Tracking code (optional)
             <input name="track_token" value="" autocomplete="off" maxlength="200">
