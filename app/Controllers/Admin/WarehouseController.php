@@ -27,11 +27,26 @@ final class WarehouseController extends Controller
                FROM products p WHERE p.deleted_at IS NULL AND p.status = 'active'
                 AND NOT EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.deleted_at IS NULL)
              UNION ALL
-             SELECT p.id, v.id, p.name, v.sku, v.stock, v.label
+             SELECT p.id, v.id, p.name, v.sku, v.stock, NULL AS label
                FROM product_variants v JOIN products p ON p.id = v.product_id
               WHERE v.deleted_at IS NULL AND p.deleted_at IS NULL AND p.status = 'active'
-             ORDER BY name, label LIMIT 200"
+             ORDER BY name, variant_id LIMIT 200"
         )->fetchAll();
+        // Variation labels such as "Red / M", built the same way as VariantService::label, in one query.
+        $labels = [];
+        foreach (\App\Core\Database::query(
+            'SELECT vov.variant_id, ov.value FROM variant_option_values vov
+               JOIN product_option_values ov ON ov.id = vov.option_value_id
+               JOIN product_options o ON o.id = ov.option_id
+              ORDER BY o.position, o.id'
+        )->fetchAll() as $r) {
+            $labels[(int) $r['variant_id']][] = (string) $r['value'];
+        }
+        foreach ($items as &$it) {
+            $vid = (int) $it['variant_id'];
+            $it['label'] = $vid > 0 ? implode(' / ', $labels[$vid] ?? []) : null;
+        }
+        unset($it);
         $rows = [];
         foreach ($items as $it) {
             $key = (int) $it['product_id'] . ':' . (int) $it['variant_id'];
