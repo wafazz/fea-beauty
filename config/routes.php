@@ -191,6 +191,8 @@ return function (Router $r): void {
             $r->post('/shipping/ninjavan/test', 'Manage/NinjaVanController@test', ['permission:shipping.manage']);
             $r->get('/shipping/jnt-express', 'Manage/JntExpressController@show', ['permission:shipping.manage']);
             $r->post('/shipping/jnt-express', 'Manage/JntExpressController@update', ['permission:shipping.manage']);
+            $r->get('/shipping/jnt-standard', 'Manage/JntStandardController@show', ['permission:shipping.manage']);
+            $r->post('/shipping/jnt-standard', 'Manage/JntStandardController@update', ['permission:shipping.manage']);
         };
         $r->group('/admin', ['auth:admin'], $shipping);
         $r->group('/staff', ['auth:staff'], $shipping);
