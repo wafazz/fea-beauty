@@ -1,6 +1,6 @@
 # New modules plan (items 1–7)
 
-**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Item 2 (Customer segments) is **done** (`083_customer_segments.sql`). Item 3 (Marketing flows) is **done** (`084_marketing.sql`). Item 7 (Wholesale accounts) is **done** (`085_wholesale.sql`). Item 5 (Multiple warehouses) is not started.
+**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Item 2 (Customer segments) is **done** (`083_customer_segments.sql`). Item 3 (Marketing flows) is **done** (`084_marketing.sql`). Item 7 (Wholesale accounts) is **done** (`085_wholesale.sql`). Item 5 (Multiple warehouses) is **done** (`086_warehouses.sql`). **All seven items are built.**
 
 Covers the seven modules from the "what else to add" list:
 CMS, customer segments, marketing flows, cross-sell, multiple warehouses, shipping rules, wholesale accounts.
@@ -156,7 +156,19 @@ hidden, not removed. Tests: `tests/CrossSellDbTest.php` (13 checks, passing on t
 
 **Open questions.** Should the cart suggestions be hidden on checkout? Should pinned items show even when out of stock?
 
-## 5. Multiple warehouses
+## 5. Multiple warehouses — DONE
+
+**Built (both phases):** warehouses (`warehouses`) and their counts (`warehouse_stock`). Stock totals stay where they were
+(`products.stock`, `product_variants.stock`). The default warehouse holds what is not in another warehouse, so existing
+stock needs no copying and the totals cannot drift. Stock moves between warehouses from `/admin/warehouses` and the total
+does not change; the move is written to the audit log. Checkout picks one warehouse that holds every physical line (the
+customer's state first, then the default) and records it on the order; a cancel or return puts stock back there. A
+warehouse cannot give out more than it holds, even when the total would allow it. Tests: `tests/WarehouseDbTest.php`
+(13 checks, passing on the `_test` database; the existing stock and order tests still pass with the module off).
+
+**Decisions:** if no single warehouse holds the whole order, checkout refuses it rather than splitting it. Pre-order,
+digital and bundle lines do not come from a warehouse count. **Not in this build:** transfers are logged in the audit
+log, not as stock movement rows.
 
 **What it does.** Stock is kept per location. Checkout takes stock from the location nearest to the customer, and
 admins see stock per location.

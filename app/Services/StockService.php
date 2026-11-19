@@ -127,6 +127,8 @@ final class StockService
             }
             if ($after !== $before) {
                 Database::query($variantId !== null ? 'UPDATE product_variants SET stock = ? WHERE id = ?' : 'UPDATE products SET stock = ? WHERE id = ?', [$after, $variantId ?? $productId]);
+                // Multiple warehouses (module multi_warehouse): the order's warehouse moves with the change, and no warehouse may go negative.
+                WarehouseService::onChange($productId, (int) ($variantId ?? 0), $after - $before, $orderId);
                 if ($variantId === null) {
                     BundleService::refreshFor($productId); // a bundle's stock depends on its parts
                 }

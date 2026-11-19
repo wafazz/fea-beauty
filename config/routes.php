@@ -255,6 +255,11 @@ return function (Router $r): void {
             // Business accounts and credit (module wholesale_accounts).
             $r->get('/wholesale', 'Admin/WholesaleController@index', ['module:wholesale_accounts']);
             $r->post('/wholesale/{id}', 'Admin/WholesaleController@update', ['module:wholesale_accounts']);
+            // Multiple warehouses (module multi_warehouse).
+            $r->get('/warehouses', 'Admin/WarehouseController@index', ['module:multi_warehouse']);
+            $r->post('/warehouses', 'Admin/WarehouseController@store', ['module:multi_warehouse']);
+            $r->post('/warehouses/transfer', 'Admin/WarehouseController@transfer', ['module:multi_warehouse']);
+            $r->post('/warehouses/{id}', 'Admin/WarehouseController@update', ['module:multi_warehouse']);
             // Store pickup points (module shipping_rules).
             $r->get('/pickup-points', 'Admin/PickupPointController@index', ['module:shipping_rules']);
             $r->post('/pickup-points', 'Admin/PickupPointController@store', ['module:shipping_rules']);

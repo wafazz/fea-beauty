@@ -212,6 +212,22 @@ final class CheckoutService
                 StoreCreditService::spend($orderId, $userId, $creditUsed);
             }
 
+            // Multiple warehouses (module multi_warehouse): one warehouse must hold every physical line; the order records it.
+            if (WarehouseService::enabled()) {
+                $lines = [];
+                foreach ($items as $it) {
+                    $pid = (int) $it['product_id'];
+                    if ($it['delivery'] !== null || PreorderService::accepting($pid) || ($it['variant_id'] === null && BundleService::isBundle($pid))) {
+                        continue; // digital, pre-order and bundle lines do not come from a warehouse count
+                    }
+                    $lines[] = ['product_id' => $pid, 'variant_id' => $it['variant_id'] !== null ? (int) $it['variant_id'] : 0, 'qty' => (int) $it['qty']];
+                }
+                $warehouse = WarehouseService::chooseFor($lines, (string) $contact['state']);
+                if ($warehouse === null) {
+                    throw new CheckoutException('These items are not all in stock at one warehouse. Please lower the quantities or try again later.');
+                }
+                Database::query('UPDATE orders SET warehouse_id = ? WHERE id = ?', [$warehouse, $orderId]);
+            }
             foreach ($items as $it) {
                 Database::query(
                     'INSERT INTO order_items (order_id, product_id, variant_id, product_name, variant_label, sku, unit_price, retail_price, base_price, company_base_price, qty, line_total, commission_rate, digital_delivery, tax_rate, tax_amount)

@@ -51,6 +51,8 @@ DB tests (checkout, affiliate, address book, wishlist) only run when `DB_NAME` e
 
 Billplz and NinjaVan credentials are entered in the portal (Billplz / NinjaVan pages, admin or staff with the `payments.manage` permission), stored encrypted with a key derived from `APP_KEY`: back up `APP_KEY` with the database, because changing it means re-entering the Billplz and NinjaVan keys.
 
+With the **Multiple warehouses** module on, stock can be kept in more than one place: manage them at `/admin/warehouses`. The default warehouse holds whatever is not in another warehouse, so the stock totals do not change when you add warehouses. An order ships from one warehouse that holds all of it (the customer's state first); a cancel or return puts the stock back in that warehouse.
+
 Stock is changed only on the **Stock Control** page (`/admin/stock`; staff need the `stock.manage` permission): add / remove / set with a reason, with a full history. Orders deduct stock and cancellations restore it automatically.
 
 Bank names are chosen from a searchable list of Malaysian banks (Select2, self-hosted; a bank that is not listed can be typed in). At checkout, picking Bank transfer shows the shop's account and asks for the receipt, the bank paid from and the date and time; staff review each receipt on the order (approve = mark paid, or send it back with a reason).
