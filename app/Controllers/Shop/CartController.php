@@ -18,6 +18,10 @@ final class CartController extends Controller
         $this->view('shop/cart', [
             'title' => 'Your cart', 'cart' => $cart, 'scripts' => ['cart-page.js'],
             'suggest' => $cart['items'] === [] ? (\App\Models\Product::popular(4) ?: \App\Models\Product::publicList('', null, 'newest', 1, 4)['rows']) : [],
+            // Cross-sell for the products already in the cart (module cross_sell).
+            'crossSell' => $cart['items'] !== [] && \App\Services\Modules::enabled('cross_sell')
+                ? \App\Services\CrossSellService::forCart(array_column($cart['items'], 'product_id'))
+                : [],
         ]);
     }
 

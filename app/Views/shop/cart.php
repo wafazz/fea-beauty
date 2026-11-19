@@ -60,5 +60,9 @@ $nav = \App\Services\StoreFront::nav();
         </ul>
     </aside>
 </form>
+<?php if (!empty($crossSell)): ?>
+    <section class="sec"><div class="sec-head"><div><h2>Goes well with your cart</h2></div></div>
+        <div class="pgrid"><?php foreach ($crossSell as $p) { require BASE_PATH . '/app/Views/partials/product_card.php'; } ?></div></section>
+<?php endif; ?>
 <?php endif; ?>
 </div>

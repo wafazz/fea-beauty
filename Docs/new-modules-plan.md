@@ -1,6 +1,8 @@
 # New modules plan (items 1–7)
 
-Planning draft, not built. Covers the seven modules from the "what else to add" list:
+**Status:** item 4 (Cross-sell suggestions) is **done**, built as migration `080_cross_sell.sql`. Items 1, 2, 3, 5, 6 and 7 are not started.
+
+Covers the seven modules from the "what else to add" list:
 CMS, customer segments, marketing flows, cross-sell, multiple warehouses, shipping rules, wholesale accounts.
 
 Every module is a paid add-on, follows the same pattern as the existing modules, and is **off by default**. A
@@ -29,7 +31,7 @@ and test gates apply.
 
 Low-risk and reusable pieces come first. Modules that change money or stock come after the ones they depend on.
 
-1. **Cross-sell suggestions (4).** Small, read-only on the storefront. It proves the paid-module wiring on a low-risk feature.
+1. **Cross-sell suggestions (4). Done.** Small, read-only on the storefront. It proves the paid-module wiring on a low-risk feature.
 2. **Shipping rules (6).** Small change to postage. Built before any new payment method, so its numbers can be checked against the existing postage tests.
 3. **Storefront content (1).** No money involved. Gives admins control of banners and policy pages.
 4. **Customer segments (2).** Needed by marketing flows and wholesale accounts.
@@ -103,7 +105,15 @@ are not wired yet, so that flow waits for courier tracking. Welcome and win-back
 
 **Open questions.** Email only, or WhatsApp as well (the WhatsApp queue already exists)? Who approves the templates?
 
-## 4. Cross-sell suggestions
+## 4. Cross-sell suggestions — DONE
+
+**Built:** `product_related` (pinned, in order, up to 12 per product), `product_copurchase` (bought together, from
+`bin/copurchase.php`, daily, 04:00). Product pages show pinned products first, then bought together, replacing the
+same-category list only when there is something to show. The cart shows "Goes well with your cart" for the items in
+it. Admins pin products from the product's edit page ("Related products (pin)"). Sold-out and inactive products are
+hidden, not removed. Tests: `tests/CrossSellDbTest.php` (13 checks, passing on the `_test` database).
+
+**Not in this build:** suggestions on the checkout page; the open questions below are still open.
 
 **What it does.** "Frequently bought together" on product pages and in the cart.
 

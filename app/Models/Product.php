@@ -177,6 +177,11 @@ final class Product extends Model
             $where[] = 'p.id <> ?';
             $args[] = (int) $opts['exclude'];
         }
+        if (!empty($opts['ids'])) {
+            $ids = array_values(array_unique(array_map('intval', (array) $opts['ids'])));
+            $where[] = 'p.id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')';
+            array_push($args, ...$ids);
+        }
         $w = implode(' AND ', $where);
 
         $orderArgs = [];

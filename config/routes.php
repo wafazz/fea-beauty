@@ -105,6 +105,11 @@ return function (Router $r): void {
             $r->get('/products/{id}/edit', 'Manage/ProductController@edit');
             $r->post('/products/{id}', 'Manage/ProductController@update');
             $r->post('/products/{id}/delete', 'Manage/ProductController@destroy');
+            // Related products (module cross_sell): pin, remove and reorder.
+            $r->get('/products/{id}/related', 'Manage/RelatedProductController@show', ['module:cross_sell']);
+            $r->post('/products/{id}/related/add', 'Manage/RelatedProductController@add', ['module:cross_sell']);
+            $r->post('/products/{id}/related/remove', 'Manage/RelatedProductController@remove', ['module:cross_sell']);
+            $r->post('/products/{id}/related/move', 'Manage/RelatedProductController@move', ['module:cross_sell']);
             $r->get('/categories', 'Manage/CategoryController@index');
             $r->post('/categories', 'Manage/CategoryController@store');
             $r->post('/categories/{id}', 'Manage/CategoryController@update');

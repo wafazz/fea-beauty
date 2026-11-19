@@ -111,7 +111,7 @@ final class CatalogController extends Controller
             'variants' => $variants,
             'base' => $base,
             'inStock' => $variants === [] ? $this->singleStock($product) > 0 : array_sum(array_column($variants, 'stock')) > 0,
-            'related' => Product::related($pid, $product['category_id'] !== null ? (int) $product['category_id'] : null, 4),
+            'related' => $this->relatedFor($product, $pid),
             'metaDescription' => mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags(\App\Services\RichText::clean($product['description'])))), 0, 155),
             'metaImage' => ($images[0]['path'] ?? null),
             // A signed-in member gets a copy-ready affiliate link for this product.
@@ -130,6 +130,18 @@ final class CatalogController extends Controller
             'memberPrice' => \App\Services\MemberPriceService::visibleFor($me !== null && $me['role'] === 'member' ? (int) $me['id'] : null, $pid, \App\Services\PricingService::cents((string) $base['price'])),
             'scripts' => ['product-page.js', 'copy-link.js', 'flash-sales.js'],
         ]);
+    }
+
+    /** Cross-sell when the module is on and it has suggestions; otherwise the same-category list, as before. */
+    private function relatedFor(array $product, int $pid): array
+    {
+        if (\App\Services\Modules::enabled('cross_sell')) {
+            $cross = \App\Services\CrossSellService::forProduct($pid);
+            if ($cross !== []) {
+                return $cross;
+            }
+        }
+        return Product::related($pid, $product['category_id'] !== null ? (int) $product['category_id'] : null, 4);
     }
 
     /** Sellable stock of a product with no variations: digital products use their own rule (keys, or unlimited). */

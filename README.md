@@ -129,6 +129,7 @@ Set these up on the server's clock (the server's time zone). Run every job from 
 | `php bin/prune-carts.php` | daily, 03:00 | **Yes** | Removes stale guest carts and lapsed cart holds. |
 | `php bin/retention.php` | daily, 03:15 | **Yes** | Deletes old logs, audit rows and visitor counts under the retention rules. |
 | `php bin/backup.php` | daily, 02:30 | Recommended | Database backup. Keep a copy off the server. |
+| `php bin/copurchase.php` | daily, 04:00 | Yes, if Cross-sell suggestions is on | Works out which products are bought together (last 180 days), for the suggestions on product pages and in the cart. |
 
 Run these by hand, not from cron: `bin/migrate.php`, `bin/create-admin.php`, `bin/seed-demo.php`, and `bin/recalc-commissions.php` (a report that needs `--apply` to change anything).
 
@@ -148,11 +149,12 @@ Paste these lines and save:
 0 3 * * *    cd /var/www/sample-ecom && php bin/prune-carts.php >> storage/logs/prune.log 2>&1
 15 3 * * *   cd /var/www/sample-ecom && php bin/retention.php >> storage/logs/retention.log 2>&1
 30 2 * * *   cd /var/www/sample-ecom && php bin/backup.php >> storage/logs/backup.log 2>&1
+0 4 * * *    cd /var/www/sample-ecom && php bin/copurchase.php >> storage/logs/copurchase.log 2>&1
 ```
 
 **Check the setup**
 ```bash
-sudo crontab -u www-data -l                                   # the eight lines are saved
+sudo crontab -u www-data -l                                   # the nine lines are saved
 sudo -u www-data php /var/www/sample-ecom/bin/prune-carts.php # run one job by hand
 tail -n 5 /var/www/sample-ecom/storage/logs/worker.log        # the worker is running
 which php                                                     # if cron jobs fail, use this full path in the lines above

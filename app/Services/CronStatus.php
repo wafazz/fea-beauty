@@ -27,6 +27,7 @@ final class CronStatus
         ['prune-carts.php', 'Daily', 0, 'Removes stale guest carts'],
         ['retention.php', 'Daily', 0, 'Deletes old logs under the retention rules'],
         ['backup.php', 'Daily', 0, 'Database backup'],
+        ['copurchase.php', 'Daily', 0, 'Works out products bought together, for cross-sell suggestions'],
     ];
 
     /** Last time the worker started, or null if it has never run. */
