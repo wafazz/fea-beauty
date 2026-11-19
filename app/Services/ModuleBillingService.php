@@ -46,6 +46,78 @@ final class ModuleBillingService
         self::$covered = [];
     }
 
+    /**
+     * Every module's row for the admin billing page, from a fixed handful of queries instead of several per module.
+     * Same rows the page always showed: coming-soon modules first in the list order, then priced ones with their
+     * quotes, paid-up date, the period bought, the open invoice and whether the superadmin has it switched on.
+     * @return array<int,array>
+     */
+    public static function billingRows(): array
+    {
+        $now = date('Y-m-d H:i:s');
+        $today = date('Y-m-d');
+
+        $prices = [];
+        foreach (Database::query('SELECT module_key, period, amount FROM module_prices WHERE amount > 0')->fetchAll() as $r) {
+            $prices[(string) $r['module_key']][(string) $r['period']] = (float) $r['amount'];
+        }
+        $subs = [];
+        foreach (Database::query('SELECT module_key, paid_until, period FROM module_subscriptions')->fetchAll() as $r) {
+            $subs[(string) $r['module_key']] = $r;
+        }
+        // Active discounts only; a module's own discount wins over the global one (see ModulePricing::activeDiscount).
+        $discounts = [];
+        foreach (Database::query('SELECT scope, kind, value, ends_at FROM module_discounts WHERE ends_at > ?', [$now])->fetchAll() as $r) {
+            $discounts[(string) $r['scope']] = ['scope' => (string) $r['scope'], 'kind' => (string) $r['kind'], 'value' => (float) $r['value'], 'ends_at' => (string) $r['ends_at']];
+        }
+        $open = [];
+        foreach (Database::query("SELECT * FROM module_invoices WHERE status IN ('unpaid','pending_review') ORDER BY id DESC")->fetchAll() as $r) {
+            $open[(string) $r['module_key']] ??= $r; // newest first, so the first one per module is the open invoice
+        }
+        $settings = [];
+        foreach (Database::query("SELECT `key`, `value` FROM settings WHERE `key` LIKE 'module.%'")->fetchAll(\PDO::FETCH_KEY_PAIR) as $k => $v) {
+            $settings[(string) $k] = (string) $v;
+        }
+
+        $rows = [];
+        foreach (Modules::LIST as $key => [$label]) {
+            $switchedOn = ($settings['module.' . $key] ?? (Modules::offByDefault($key) ? '0' : '1')) === '1';
+            $plans = [];
+            foreach (['one_time', 'monthly', 'yearly'] as $period) {
+                if (isset($prices[$key][$period])) {
+                    $plans[$period] = $prices[$key][$period];
+                }
+            }
+            if ($plans === []) {
+                // No price set yet: listed, marked as coming soon, with no way to pay.
+                $rows[] = ['key' => $key, 'label' => $label, 'help' => Modules::LIST[$key][1], 'coming_soon' => true, 'quotes' => [], 'until' => null, 'subscribed' => null, 'covered' => false, 'open' => null, 'switched_on' => $switchedOn];
+                continue;
+            }
+
+            $d = $discounts[$key] ?? ($discounts['global'] ?? null);
+            $quotes = [];
+            foreach ($plans as $period => $list) {
+                $final = $d === null ? $list : ModulePricing::finalFor($list, $d['kind'], $d['value']);
+                $quotes[$period] = [
+                    'period' => $period, 'list' => $list, 'final' => max(0.0, (float) $final),
+                    'kind' => $d['kind'] ?? null, 'value' => $d['value'] ?? 0.0, 'ends_at' => $d['ends_at'] ?? null, 'scope' => $d['scope'] ?? null,
+                ];
+            }
+            $sub = $subs[$key] ?? null;
+            $until = $sub !== null && $sub['paid_until'] !== null ? (string) $sub['paid_until'] : null;
+            $rows[] = [
+                'key' => $key, 'label' => $label, 'quotes' => $quotes,
+                'until' => $until,
+                'subscribed' => $sub !== null && $sub['period'] !== null ? (string) $sub['period'] : null,
+                'covered' => $until !== null && $until >= $today,
+                'open' => $open[$key] ?? null,
+                'switched_on' => $switchedOn,
+                'coming_soon' => false,
+            ];
+        }
+        return $rows;
+    }
+
     /** The end of a period that starts on $start (Y-m-d). */
     public static function periodEnd(string $start, string $period): string
     {

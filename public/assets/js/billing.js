@@ -3,77 +3,8 @@
 (function () {
   'use strict';
 
-  // Flip-clock countdown for each paid card. The end time comes from the server as a timestamp (any timezone).
-  function pad(n) { return n < 10 ? '0' + n : '' + n; }
-  var clocks = Array.prototype.slice.call(document.querySelectorAll('.flip-clock[data-end-ms]'));
-  clocks.forEach(function (c) {
-    c._cells = Array.prototype.slice.call(c.querySelectorAll('.flip-num'));
-    c._end = c.querySelector('.flip-end');
-    c._endText = c._end ? c._end.textContent : '';
-  });
-  // A page-flip: the top half of the old digits folds down, and the bottom half of the new digits rises into place.
-  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function flipTo(num, text) {
-    var tile = num.parentNode;
-    var size = getComputedStyle(num).fontSize;
-    var color = getComputedStyle(num).color;
-    var old = num.textContent;
-    num.textContent = text;
-    var top = document.createElement('div');
-    top.className = 'flip-leaf top';
-    var topFace = document.createElement('span');
-    topFace.className = 'flip-face';
-    topFace.textContent = old;
-    topFace.style.fontSize = size;
-    topFace.style.color = color;
-    top.appendChild(topFace);
-    var bottom = document.createElement('div');
-    bottom.className = 'flip-leaf bottom';
-    var bottomFace = document.createElement('span');
-    bottomFace.className = 'flip-face';
-    bottomFace.textContent = text;
-    bottomFace.style.fontSize = size;
-    bottomFace.style.color = color;
-    bottom.appendChild(bottomFace);
-    tile.appendChild(top);
-    tile.appendChild(bottom);
-    var done = 0;
-    function cleanup() { if (++done === 2) { top.remove(); bottom.remove(); } }
-    top.addEventListener('animationend', cleanup);
-    bottom.addEventListener('animationend', cleanup);
-  }
-  function setCell(num, text) {
-    if (num.textContent === text) return;
-    if (reduceMotion) { num.textContent = text; return; }
-    flipTo(num, text);
-  }
-  function paintClock(c) {
-    var left = Number(c.dataset.endMs) - Date.now();
-    c.classList.remove('is-soon', 'is-ended');
-    if (left <= 0) {
-      c._cells.forEach(function (n) { setCell(n, '00'); });
-      c.classList.add('is-ended');
-      if (c._end) c._end.textContent = c.dataset.endedText || 'Ended · pay to renew';
-      return false;
-    }
-    var s = Math.floor(left / 1000);
-    var parts = [Math.floor(s / 86400), Math.floor((s % 86400) / 3600), Math.floor((s % 3600) / 60), s % 60];
-    c._cells.forEach(function (n, i) { setCell(n, pad(parts[i])); });
-    if (left < 7 * 86400000) c.classList.add('is-soon');
-    if (c._end) c._end.textContent = c._endText;
-    return true;
-  }
-  function tickClocks() {
-    var live = 0;
-    clocks.forEach(function (c) { if (c.dataset.done !== '1') { if (paintClock(c)) live++; else c.dataset.done = '1'; } });
-    return live;
-  }
-  if (clocks.length) {
-    tickClocks();
-    var clockHandle = setInterval(function () { if (tickClocks() === 0) clearInterval(clockHandle); }, 1000);
-  }
-
-  // Inline discount timers: "Ends in 2d 03:10:05", then "Ended". Used for the discount end times in this page.
+  // Simple countdowns: "Time left: 2d 03:10:05", updated every second, then "Ended". Used for paid plans and discounts.
+  // The end time comes from the server as a timestamp (any timezone). No work while the tab is hidden.
   function fmtLeft(ms) {
     var s = Math.floor(ms / 1000);
     var d = Math.floor(s / 86400);
@@ -83,20 +14,25 @@
     function p(n) { return n < 10 ? '0' + n : '' + n; }
     return (d > 0 ? d + 'd ' : '') + p(h) + ':' + p(m) + ':' + p(x);
   }
-  var inlineTimers = Array.prototype.slice.call(document.querySelectorAll('.mod-timer, .bill-disc-timer'));
+  var inlineTimers = Array.prototype.slice.call(document.querySelectorAll('.mod-timer, .bill-disc-timer, .bill-countdown[data-end-ms]'));
   function tickInline() {
     var live = 0;
     inlineTimers.forEach(function (t) {
       var left = Number(t.dataset.endMs) - Date.now();
-      if (left <= 0) { t.textContent = 'Ended'; t.classList.add('is-ended'); return; }
+      if (left <= 0) { t.textContent = t.dataset.endedText || 'Ended'; t.classList.add('is-ended'); return; }
       live++;
-      t.textContent = 'Ends in ' + fmtLeft(left);
+      t.textContent = (t.dataset.prefix || 'Ends in ') + fmtLeft(left);
     });
     return live;
   }
   if (inlineTimers.length) {
     tickInline();
-    var inlineHandle = setInterval(function () { if (tickInline() === 0) clearInterval(inlineHandle); }, 1000);
+    // No work while the tab is hidden; catch up as soon as it is shown again.
+    var inlineHandle = setInterval(function () {
+      if (document.hidden) return;
+      if (tickInline() === 0) clearInterval(inlineHandle);
+    }, 1000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) tickInline(); });
   }
 
   // Per-card receipt pickers only. The basket's picker is handled in the basket block below.

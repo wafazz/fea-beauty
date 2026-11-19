@@ -18,30 +18,10 @@ final class BillingController extends Controller
 {
     public function index(Request $request): void
     {
-        $rows = [];
-        foreach (Modules::LIST as $key => [$label]) {
-            $plans = ModulePricing::plans($key);
-            if ($plans === []) {
-                // No price set yet: listed so the admin can see it, marked as coming soon, with no way to pay.
-                $rows[] = ['key' => $key, 'label' => $label, 'help' => Modules::LIST[$key][1], 'coming_soon' => true, 'quotes' => [], 'until' => null, 'subscribed' => null, 'covered' => false, 'open' => null, 'switched_on' => Modules::switchedOn($key)];
-                continue;
-            }
-            $quotes = [];
-            foreach (array_keys($plans) as $period) {
-                $quotes[$period] = ModulePricing::quote($key, $period);
-            }
-            $open = \App\Core\Database::query("SELECT * FROM module_invoices WHERE module_key = ? AND status IN ('unpaid','pending_review') ORDER BY id DESC LIMIT 1", [$key])->fetch() ?: null;
-            $rows[] = [
-                'key' => $key, 'label' => $label, 'quotes' => $quotes,
-                'until' => ModuleBillingService::paidUntil($key), 'subscribed' => ModuleBillingService::subscribedPeriod($key),
-                'covered' => ModuleBillingService::covered($key), 'open' => $open,
-                'switched_on' => Modules::switchedOn($key),
-                'coming_soon' => false,
-            ];
-        }
+        // One batch of queries for every module (was several per module, slow on a remote database).
         $this->view('admin/billing', [
             'title' => 'Buy Add-On Module',
-            'rows' => $rows,
+            'rows' => ModuleBillingService::billingRows(),
             'bank' => PlatformSettings::bank(),
             'billplzReady' => PlatformSettings::billplzCredentials() !== null,
             'scripts' => ['billing.js'],

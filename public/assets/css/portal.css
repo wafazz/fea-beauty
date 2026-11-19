@@ -869,6 +869,7 @@ a.vis-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(47
 .expiry-fields input[type=datetime-local]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
 .expiry-fields input[type=datetime-local]:disabled{opacity:.45;cursor:not-allowed;background:var(--surface-2)}
 .expiry-now{margin:.25rem 0 .75rem;color:var(--muted)}
+.bill-countdown{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
 .expiry-now strong{color:var(--text)}
 .expiry-current{display:inline-block;margin-left:auto;padding:.1rem .5rem;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-size:.75rem;font-weight:600;line-height:1.5}
 @media (prefers-reduced-motion: reduce){.expiry-fields *{transition:none !important}}

@@ -114,14 +114,10 @@ $infoDialog = function (string $key, string $label, bool $canAdd): string {
                 <?php if ($status === 'paid' && $r['until'] !== null && $r['until'] !== '9999-12-31'):
                     $endMs = strtotime((string) $r['until'] . ' 23:59:59') * 1000;
                 ?>
-                    <div class="flip-clock" data-end-ms="<?= (int) $endMs ?>" role="timer" aria-label="Time left on this plan">
-                        <div class="flip-units" data-units>
-                            <?php foreach (['D', 'H', 'M', 'S'] as $unit): ?>
-                                <div class="flip-unit"><div class="flip-tile"><span class="flip-num">00</span></div><span class="flip-label"><?= e($unit) ?></span></div>
-                            <?php endforeach; ?>
-                        </div>
-                        <small class="flip-end muted">Ends <?= e(date('d M Y, H:i', $endMs / 1000)) ?></small>
-                    </div>
+                    <p class="muted bill-sub">
+                        <span class="bill-countdown" data-end-ms="<?= (int) $endMs ?>" data-prefix="Time left: " data-ended-text="Ended" role="timer"></span>
+                        · ends <?= e(date('d M Y, H:i', $endMs / 1000)) ?>
+                    </p>
                 <?php elseif ($status === 'paid'): ?>
                     <div class="bill-count is-lifetime" role="status"><span class="bill-count-label">No end date</span></div>
                 <?php endif; ?>
@@ -148,14 +144,10 @@ $infoDialog = function (string $key, string $label, bool $canAdd): string {
                 }
                 ?>
                 <?php if ($soonest !== null): ?>
-                    <div class="flip-clock is-discount is-mini" data-end-ms="<?= (int) (strtotime((string) $soonest['ends_at']) * 1000) ?>" data-ended-text="Offer ended" role="timer" aria-label="Time left on this discount">
-                        <div class="flip-units" data-units>
-                            <?php foreach (['D', 'H', 'M', 'S'] as $unit): ?>
-                                <div class="flip-unit"><div class="flip-tile"><span class="flip-num">00</span></div><span class="flip-label"><?= e($unit) ?></span></div>
-                            <?php endforeach; ?>
-                        </div>
-                        <small class="flip-end">Discount ends <?= e(date('d M Y, H:i', strtotime((string) $soonest['ends_at']))) ?></small>
-                    </div>
+                    <p class="muted bill-sub">
+                        <span class="bill-countdown" data-end-ms="<?= (int) (strtotime((string) $soonest['ends_at']) * 1000) ?>" data-prefix="Offer ends in " data-ended-text="Offer ended" role="timer"></span>
+                        · discount ends <?= e(date('d M Y, H:i', strtotime((string) $soonest['ends_at']))) ?>
+                    </p>
                 <?php endif; ?>
 
                 <form method="post" enctype="multipart/form-data" class="bill-form" data-bill-form>
