@@ -108,7 +108,7 @@ final class CheckoutController extends Controller
             'methods' => $this->methodsFor($cart),
             'shipping_cents' => $ship['fee'],
             'bank' => PaymentSettings::bank(),
-            'scripts' => ['receipt-form.js', 'checkout-shipping.js'],
+            'scripts' => ['receipt-form.js', 'checkout-shipping.js', 'checkout-remember.js'],
             'vendor' => ['select2'],
         ]);
     }
