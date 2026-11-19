@@ -30,6 +30,13 @@ $defaultMethod = isset($methods['cod']) ? 'cod' : (string) array_key_first($meth
                 <?php if (!$guest): ?><small class="muted">Orders are linked to your account email.</small><?php endif; ?></label>
             <label>Phone <input name="phone" value="<?= $val('phone') ?>" autocomplete="tel" inputmode="tel" required><?= field_error('phone') ?></label>
         </div>
+        <?php if ($guest): ?>
+            <div class="co-remember" data-remember-box>
+                <label class="check"><input type="checkbox" id="remember-details"> Remember my details on this device for next time</label>
+                <label class="remember-name" id="remember-label-wrap" hidden>Name this address (optional) <input type="text" id="remember-label" maxlength="30" placeholder="Home, Office…"></label>
+                <small class="muted">Your name, email and phone are saved once, with up to 5 addresses, in this browser only. Do not tick this on a shared computer. When you have 5, the least recently used address is replaced. <button type="button" class="link-btn" id="remember-forget" hidden>Forget all my saved details</button></small>
+            </div>
+        <?php endif; ?>
     </section>
 
     <section class="co-card">

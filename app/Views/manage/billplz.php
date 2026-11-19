@@ -7,7 +7,18 @@ $hint = fn(string $f, string $label) => $cfg[$f . '_set']
 $host = strtolower((string) parse_url((string) env('APP_URL', ''), PHP_URL_HOST));
 $localHost = in_array($host, ['localhost', '127.0.0.1', '::1', ''], true) || str_ends_with($host, '.test') || str_ends_with($host, '.localhost');
 ?>
-<div class="msg-page">
+<?php
+$callbackUrl = url('/payments/billplz/callback');
+$steps = [
+    ['Collection ID entered', $cfg['collection_id'] !== ''],
+    ['API secret key saved', (bool) $cfg['api_key_set']],
+    ['X-Signature key saved', (bool) $cfg['x_signature_key_set']],
+    ['Connection tested and passed', $cfg['verified'] === 'ok'],
+    ['Public address for payment confirmations', !$localHost],
+];
+$doneSteps = count(array_filter($steps, fn($s) => $s[1]));
+?>
+<div class="msg-page billplz-page">
     <header class="msg-head">
         <div>
             <h1>Billplz</h1>
@@ -31,17 +42,31 @@ $localHost = in_array($host, ['localhost', '127.0.0.1', '::1', ''], true) || str
         </p>
     </section>
 
+    <section class="msg-card billplz-checklist" aria-labelledby="bp-checklist">
+        <div class="msg-row">
+            <h2 id="bp-checklist">Setup checklist</h2>
+            <span class="muted"><?= (int) $doneSteps ?> of <?= count($steps) ?> done</span>
+        </div>
+        <progress class="billplz-progress" max="<?= count($steps) ?>" value="<?= (int) $doneSteps ?>" aria-label="Setup progress"></progress>
+        <ol class="billplz-steps">
+            <?php foreach ($steps as [$text, $done]): ?>
+                <li class="<?= $done ? 'is-done' : '' ?>"><span class="step-mark" aria-hidden="true"><?= $done ? '✓' : '' ?></span><span><?= e($text) ?><span class="sr-only"><?= $done ? ' (done)' : ' (to do)' ?></span></span></li>
+            <?php endforeach; ?>
+        </ol>
+    </section>
+
     <section class="msg-card">
         <h2>Credentials</h2>
         <form method="post" action="<?= e(url($base . '/payments/billplz')) ?>" class="card-form" autocomplete="off" novalidate data-busy-form>
             <?= csrf_field() ?>
             <label>Mode
-                <select name="mode">
+                <select name="mode" data-mode-select data-initial="<?= e($cfg['mode']) ?>">
                     <?php foreach ($modes as $k => $label): ?>
                         <option value="<?= e($k) ?>" <?= old('mode', $cfg['mode']) === $k ? 'selected' : '' ?>><?= e($label) ?></option>
                     <?php endforeach; ?>
                 </select><?= field_error('mode') ?>
-                <small class="muted">Sandbox and production use different keys. Switching mode asks you to re-enter them.</small></label>
+                <small class="muted">Sandbox and production use different keys. Switching mode asks you to re-enter them.</small>
+                <div class="alert warn" data-mode-notice role="status" hidden>You changed the mode. Enter both keys again for this mode, then test the connection.</div></label>
             <label>Collection ID <input name="collection_id" value="<?= old('collection_id', $cfg['collection_id']) ?>" maxlength="64" spellcheck="false"><?= field_error('collection_id') ?></label>
             <label>Payment order collection ID <input name="payment_order_collection_id" value="<?= old('payment_order_collection_id', $cfg['payment_order_collection_id']) ?>" maxlength="64" spellcheck="false"><small class="muted">Used for paying affiliate withdrawals. Leave empty until payouts are set up.</small><?= field_error('payment_order_collection_id') ?></label>
             <label>API secret key <input type="password" name="api_key" autocomplete="new-password" spellcheck="false" maxlength="200" placeholder="<?= e($hint('api_key', 'API secret key')) ?>"><?= field_error('api_key') ?></label>
@@ -62,6 +87,20 @@ $localHost = in_array($host, ['localhost', '127.0.0.1', '::1', ''], true) || str
             <form method="post" action="<?= e(url($base . '/payments/billplz/test')) ?>" class="inline" data-busy-form><?= csrf_field() ?>
                 <button class="btn secondary" <?= $state === 'none' ? 'disabled' : '' ?>>Test with saved details</button></form>
         </div>
+    </section>
+
+    <section class="msg-card">
+        <div class="msg-row">
+            <div>
+                <h2>Callback URL</h2>
+                <p class="muted">Give this address to Billplz so it can confirm payments. It must be public https for payments to be marked paid.</p>
+            </div>
+        </div>
+        <div class="msg-input-row billplz-copy">
+            <input type="text" readonly value="<?= e($callbackUrl) ?>" aria-label="Callback URL" data-copy-source>
+            <button type="button" class="btn secondary" data-copy-button>Copy</button>
+        </div>
+        <p class="muted" data-copy-status role="status" aria-live="polite"></p>
     </section>
 
     <?php if ($history !== []): ?>
