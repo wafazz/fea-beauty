@@ -139,6 +139,7 @@ final class Queue
             'stock.back' => fn(array $p): bool => StockAlertService::notify((int) $p['product_id'], (int) $p['variant_key']),
             'price.drop' => fn(array $p): bool => PriceAlertService::notify((int) $p['product_id']),
             'email.order_created' => fn(array $p): bool => EmailService::orderCreatedSend((int) $p['order_id'], (string) $p['track_url']),
+            'push.order' => fn(array $p): bool => PushService::notifyNewOrder((int) $p['order_id']),
             'whatsapp.status' => function (array $p): bool {
                 // WhatsAppService logs a provider rejection itself, so the job is finished either way.
                 WhatsAppService::notifyStatus((int) $p['order_id'], (string) $p['status']);
