@@ -91,6 +91,7 @@ A switched-off module returns 404 on its pages, hides its menu items, and stops 
    Do not make `app/`, `config/` or `.env` writable by the web user. Permissions can reset after a redeploy or a server move, so check them again then.
 6. Cron, daily: `php bin/prune-carts.php` (removes stale guest carts and expired throttle/click rows). Also `php bin/retention.php` (deletes old email and WhatsApp logs, audit rows, daily visitor counts and app.log entries; see **Personal data** below).
 7. Cron, hourly: `php bin/expire-unpaid.php` (cancels unpaid online-payment orders after `UNPAID_HOLD_HOURS`, default 24, and restocks them).
+7a. Cron, **hourly**: `php bin/subscriptions.php` runs due subscription cycles (only needed when Subscriptions is on).
 8. Cron, **every 10 minutes**: `php bin/abandoned-carts.php` saves member carts and sends the abandoned-cart reminders (only when that module is on).
 9. Cron, **daily**: `php bin/module-billing.php` emails admins 7 days before a monthly or yearly module renews.
 10. Cron, **every minute**: `php bin/worker.php` sends the queued emails and WhatsApp messages. Without it, nothing queued is sent. See **Background jobs** below.
@@ -115,22 +116,43 @@ git pull origin <branch>
 php bin/migrate.php                      # applies only new migrations
 ```
 
+## Required cron jobs
+Set these up on the server's clock (the server's time zone). Run every job from the project folder, with the same web user the app runs as, so the files it creates stay writable by PHP.
+
+| Script | Schedule | Needed? | What it does |
+|---|---|---|---|
+| `php bin/worker.php` | every minute | **Yes** | Sends queued emails and WhatsApp messages. Without it, nothing queued is sent. |
+| `php bin/expire-unpaid.php` | hourly | **Yes** | Cancels unpaid online-payment orders after `UNPAID_HOLD_HOURS` and restocks them. |
+| `php bin/subscriptions.php` | hourly | Yes, if Subscriptions is on | Runs due subscription cycles. |
+| `php bin/abandoned-carts.php` | every 10 minutes | Yes, if Abandoned cart emails is on | Saves member carts and sends abandoned-cart reminders. |
+| `php bin/module-billing.php` | daily | Yes, if paid modules are used | Emails admins 7 days before a monthly or yearly module renews. |
+| `php bin/prune-carts.php` | daily, 03:00 | **Yes** | Removes stale guest carts and lapsed cart holds. |
+| `php bin/retention.php` | daily, 03:15 | **Yes** | Deletes old logs, audit rows and visitor counts under the retention rules. |
+| `php bin/backup.php` | daily, 02:30 | Recommended | Database backup. Keep a copy off the server. |
+
+Run these by hand, not from cron: `bin/migrate.php`, `bin/create-admin.php`, `bin/seed-demo.php`, and `bin/recalc-commissions.php` (a report that needs `--apply` to change anything).
+
+The admin **Overview** page (module `admin_overview`) lists these jobs with their next run, and warns when the worker has not run in the last 3 minutes.
+
 **Cron jobs** (install under the web user, so files it creates stay writable by PHP):
 ```bash
 sudo crontab -u www-data -e
 ```
 Paste these lines and save:
 ```
-* * * * *  cd /var/www/sample-ecom && php bin/worker.php >> storage/logs/worker.log 2>&1
-0 * * * *  cd /var/www/sample-ecom && php bin/expire-unpaid.php >> storage/logs/expire.log 2>&1
-0 3 * * *  cd /var/www/sample-ecom && php bin/prune-carts.php >> storage/logs/prune.log 2>&1
-15 3 * * * cd /var/www/sample-ecom && php bin/retention.php >> storage/logs/retention.log 2>&1
-30 2 * * * cd /var/www/sample-ecom && php bin/backup.php >> storage/logs/backup.log 2>&1
+* * * * *    cd /var/www/sample-ecom && php bin/worker.php >> storage/logs/worker.log 2>&1
+0 * * * *    cd /var/www/sample-ecom && php bin/expire-unpaid.php >> storage/logs/expire.log 2>&1
+0 * * * *    cd /var/www/sample-ecom && php bin/subscriptions.php >> storage/logs/subscriptions.log 2>&1
+*/10 * * * * cd /var/www/sample-ecom && php bin/abandoned-carts.php >> storage/logs/abandoned.log 2>&1
+0 9 * * *    cd /var/www/sample-ecom && php bin/module-billing.php >> storage/logs/billing.log 2>&1
+0 3 * * *    cd /var/www/sample-ecom && php bin/prune-carts.php >> storage/logs/prune.log 2>&1
+15 3 * * *   cd /var/www/sample-ecom && php bin/retention.php >> storage/logs/retention.log 2>&1
+30 2 * * *   cd /var/www/sample-ecom && php bin/backup.php >> storage/logs/backup.log 2>&1
 ```
 
 **Check the setup**
 ```bash
-sudo crontab -u www-data -l                                   # the five lines are saved
+sudo crontab -u www-data -l                                   # the eight lines are saved
 sudo -u www-data php /var/www/sample-ecom/bin/prune-carts.php # run one job by hand
 tail -n 5 /var/www/sample-ecom/storage/logs/worker.log        # the worker is running
 which php                                                     # if cron jobs fail, use this full path in the lines above

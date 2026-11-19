@@ -7,10 +7,26 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Services\DashboardService;
+use App\Services\Modules;
+use App\Services\OverviewService;
 
 final class DashboardController extends Controller
 {
+    /** The admin front page: the overview when the admin_overview module is on, otherwise the standard dashboard. */
     public function index(Request $request): void
+    {
+        if (Modules::enabled('admin_overview')) {
+            $this->view('admin/overview', [
+                'title' => 'Overview',
+                'o' => OverviewService::build(),
+            ], 'portal');
+            return;
+        }
+        $this->analytics($request);
+    }
+
+    /** The standard charts dashboard (always available at /admin/analytics). */
+    public function analytics(Request $request): void
     {
         $this->view('admin/dashboard', [
             'title' => 'Dashboard',

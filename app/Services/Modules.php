@@ -42,13 +42,14 @@ final class Modules
         'subscriptions' => ['Subscriptions', 'Shoppers subscribe to a product for regular deliveries. Each cycle becomes an order they pay by hand; an unpaid cycle pauses the subscription until it is paid. Off stops new subscriptions and renewals.'],
         'stock_movements' => ['Stock movement log', 'The Stock Movement page and the Movement links on Stock Control. Off hides the page only: stock is still changed and every change is still recorded.'],
         'vouchers' => ['Discount coupons', 'Discount codes shoppers enter at checkout, and the Vouchers menu. Off stops every code at once; orders that already used a code keep their discount.'],
+        'admin_overview' => ['Admin overview', 'A front page for admins: today\'s sales, orders waiting, low stock and the cron jobs with the next run. Off keeps the standard dashboard as the front page.'],
     ];
 
     /** Every module is off until a superadmin turns it on. */
     public const OFF_BY_DEFAULT = [
         'flash_sales', 'vouchers', 'affiliates', 'digital_products', 'stock_movements', 'price_alerts', 'accounting_export', 'stock_counts', 'quantity_breaks', 'member_prices', 'store_credit', 'preorders', 'purchase_orders', 'subscriptions',
         'abandoned_cart_emails', 'back_in_stock', 'product_csv', 'bulk_pricing', 'returns', 'loyalty', 'gift_cards',
-        'bundles', 'newsletter', 'sales_reports', 'support', 'tax',
+        'bundles', 'newsletter', 'sales_reports', 'support', 'tax', 'admin_overview',
     ];
 
     public static function enabled(string $key): bool

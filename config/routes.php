@@ -214,6 +214,7 @@ return function (Router $r): void {
         $r->group('/admin', ['auth:admin'], function (Router $r): void {
             $r->get('/', 'Admin/DashboardController@index');
             $r->get('/dashboard/data', 'Admin/DashboardController@data');
+            $r->get('/analytics', 'Admin/DashboardController@analytics');
             $r->get('/staff', 'Admin/StaffController@index');
             $r->get('/staff/create', 'Admin/StaffController@create');
             $r->post('/staff', 'Admin/StaffController@store');

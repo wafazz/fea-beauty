@@ -30,6 +30,9 @@ if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
     exit(0);
 }
 
+// Record this run so the admin overview can show the worker is alive (cron.worker.last).
+\App\Models\Setting::set(\App\Services\CronStatus::WORKER_KEY, date('Y-m-d H:i:s'));
+
 try {
     $r = Queue::run(50);
 } catch (\Throwable $e) {
