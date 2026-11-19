@@ -17,6 +17,7 @@ final class PickupPointController extends Controller
             'title' => 'Pickup points',
             'points' => PickupPointService::all(),
             'states' => config('states'),
+            'scripts' => ['pickup-points.js'],
         ], 'portal');
     }
 

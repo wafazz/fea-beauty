@@ -925,6 +925,10 @@ a.vis-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(47
 .cc-rich blockquote{margin:.6em 0;padding:.2em .9em;border-left:3px solid var(--accent);color:var(--muted)}
 .cc-rich ul,.cc-rich ol{padding-left:1.4rem;margin:.4em 0}
 .cc-rich a{color:var(--accent)}
+.pp-hint-ok{color:var(--ok-fg)!important;font-weight:600}
+.pp-preview{padding:.6rem .8rem;border:1px dashed var(--border-strong);border-radius:10px;background:var(--surface-2);overflow-wrap:anywhere}
+.pp-preview strong{color:var(--text)}
+.cc-form input[aria-invalid=true]{border-color:var(--bad-fg)}
 @media (max-width:560px){.cc-page .cc-actions .btn,.cc-page .cc-actions .s-btn{width:100%}.cc-tabs{width:100%}.cc-tabs .s-btn{flex:1}.cc-item{padding:0 .7rem}}
 .expiry-now strong{color:var(--text)}
 .expiry-current{display:inline-block;margin-left:auto;padding:.1rem .5rem;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-size:.75rem;font-weight:600;line-height:1.5}
