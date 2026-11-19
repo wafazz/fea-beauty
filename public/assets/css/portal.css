@@ -799,6 +799,33 @@ a.vis-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(47
 .msg-table tr[hidden]{display:none}
 .msg-table td{vertical-align:top}
 .msg-empty{padding:1.2rem;text-align:center;color:var(--muted);background:var(--surface-2);border-radius:12px}
+
+/* ---- Billplz settings page ---- */
+.alert.warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.billplz-progress{display:block;width:100%;height:8px;margin:.7rem 0 .9rem;border-radius:999px;overflow:hidden;appearance:none;-webkit-appearance:none;border:0}
+.billplz-progress::-webkit-progress-bar{background:var(--surface-2);border-radius:999px}
+.billplz-progress::-webkit-progress-value{background:var(--accent);border-radius:999px;transition:width .3s ease}
+.billplz-progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
+.billplz-steps{list-style:none;margin:0;padding:0;display:grid;gap:.45rem}
+.billplz-steps li{display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:.92rem}
+.billplz-steps li.is-done{color:var(--text)}
+.step-mark{width:22px;height:22px;flex:0 0 22px;border-radius:50%;border:2px solid var(--border-strong);display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff}
+.billplz-steps li.is-done .step-mark{background:#15803d;border-color:#15803d}
+.secret-field{position:relative;display:block;width:100%}
+.secret-field input{width:100%;box-sizing:border-box;padding-right:4.2rem}
+.secret-toggle{position:absolute;right:.4rem;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--accent);font:inherit;font-weight:600;font-size:.82rem;cursor:pointer;padding:.3rem .45rem;border-radius:6px}
+.secret-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.billplz-copy input{flex:1;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem}
+@media (max-width:600px){
+  .billplz-page .msg-head{flex-direction:column;align-items:stretch}
+  .billplz-page .msg-row{flex-direction:column;align-items:stretch}
+  .billplz-page .msg-row > .btn,.billplz-page .msg-row > form .btn{width:100%}
+  .billplz-page .card-form{max-width:none}
+  .billplz-page input,.billplz-page select,.billplz-page textarea{font-size:16px}
+  .billplz-page .msg-input-row{flex-direction:column;align-items:stretch}
+  .billplz-page .msg-input-row .btn{width:100%}
+  .billplz-page .msg-card{padding:1rem}
+}
 .is-busy{position:relative;color:transparent!important}
 .is-busy::after{content:"";position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border:2px solid #fff;border-right-color:transparent;border-radius:50%;animation:msg-spin .7s linear infinite}
 @keyframes msg-spin{to{transform:rotate(360deg)}}

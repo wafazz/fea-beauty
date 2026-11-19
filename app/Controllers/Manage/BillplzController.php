@@ -20,6 +20,7 @@ final class BillplzController extends ManageController
             'cfg' => BillplzSettings::overview(),
             'modes' => BillplzSettings::MODES,
             'history' => AuditService::recent('billplz.'),
+            'scripts' => ['billplz-admin.js'],
         ], 'portal');
     }
 
