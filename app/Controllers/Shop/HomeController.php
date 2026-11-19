@@ -25,6 +25,7 @@ final class HomeController extends Controller
             'popular' => Product::popular(4),
             'brands' => Product::publicBrands(),
             'flashSales' => \App\Services\FlashSaleService::live(),
+            'banners' => \App\Services\CmsService::liveBanners(), // empty unless cms_pages is on
             'bleed' => true,
             'scripts' => ['flash-sales.js'],
         ]);

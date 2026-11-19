@@ -6,6 +6,17 @@ $section = function (string $title, string $href, ?string $sub = null): string {
     return '<div class="sec-head"><div><h2>' . e($title) . '</h2>' . ($sub ? '<p class="muted">' . e($sub) . '</p>' : '') . '</div><a class="sec-link" href="' . e($href) . '">View all ' . icon('arrow', 'i i-sm') . '</a></div>';
 };
 ?>
+<?php if (!empty($banners)): ?>
+<div class="cms-banners s-wrap" style="display:grid;gap:.75rem;margin-top:1rem">
+    <?php foreach ($banners as $b): ?>
+        <?php
+        $img = '<img src="' . e(url($b['image'])) . '" alt="' . e($b['title']) . '" loading="lazy" style="width:100%;height:auto;border-radius:12px;display:block">';
+        $href = $b['link'] === null ? null : (str_starts_with((string) $b['link'], 'http') ? (string) $b['link'] : url((string) $b['link']));
+        ?>
+        <?= $href !== null ? '<a class="cms-banner" href="' . e($href) . '">' . $img . '</a>' : '<div class="cms-banner">' . $img . '</div>' ?>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
 <section class="hero">
     <div class="s-wrap hero-grid">
         <div class="hero-copy">

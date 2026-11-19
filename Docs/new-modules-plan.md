@@ -1,6 +1,6 @@
 # New modules plan (items 1–7)
 
-**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Items 1, 2, 3, 5 and 7 are not started.
+**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Items 2, 3, 5 and 7 are not started.
 
 Covers the seven modules from the "what else to add" list:
 CMS, customer segments, marketing flows, cross-sell, multiple warehouses, shipping rules, wholesale accounts.
@@ -39,7 +39,15 @@ Low-risk and reusable pieces come first. Modules that change money or stock come
 6. **Wholesale accounts (7).** Depends on segments and member price groups. Changes payment rules, so it needs the full money tests.
 7. **Multiple warehouses (5).** Largest and riskiest: it changes how stock is counted and deducted. Start with read-only per-location counts, and only later allocate orders to locations.
 
-## 1. Storefront content (CMS)
+## 1. Storefront content (CMS) — DONE
+
+**Built:** homepage banners (`cms_banners`: image, link, start and end times, order, active) shown at the top of the
+homepage; content pages (`cms_pages`: title, address, body, draft or published, SEO title and description) served at
+`/pages/<address>`. Bodies are cleaned with `RichText` on save and on display. Addresses that clash with the shop are
+refused. Admin: `/admin/content`. Tests: `tests/CmsDbTest.php` (16 checks, passing on the `_test` database).
+
+**Not in this build:** a second banner position (middle of the page); a footer menu of pages; Malay-language pages
+as a separate language. The open questions below are still open.
 
 **What it does.** Admins manage homepage banners and content pages (for example FAQ, shipping policy, returns policy)
 without a developer.

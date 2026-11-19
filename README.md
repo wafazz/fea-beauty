@@ -26,6 +26,8 @@ Safe to re-run (nothing is duplicated) and it refuses to run when `APP_ENV=produ
 ## Storefront
 Public pages (`/`, `/products`, product, cart, checkout, order tracking, login/register) use `public/assets/css/shop.css` and `shop.js` (plus `catalog.js`, `product-page.js`, `cart-page.js`). The look follows the light/dark toggle in the header. Menus, footer and the "Sale" / "Popular" sections are built from real data, so they appear only when there is something to show; `php bin/seed-demo.php` fills a demo catalogue.
 
+With the **Storefront content** module on, admins manage homepage banners and content pages at `/admin/content`. A page is served at `/pages/<address>` once it is published; a banner shows at the top of the homepage while it is active and inside its dates.
+
 ## Tests
 ```
 php tests/run.php                                   # unit checks (no database needed)

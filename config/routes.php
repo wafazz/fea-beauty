@@ -27,6 +27,7 @@ return function (Router $r): void {
         $r->post('/install/check', 'InstallController@check');
         $r->post('/install/finish', 'InstallController@finish');
         $r->get('/products', 'Shop/CatalogController@index');
+        $r->get('/pages/{slug}', 'Shop/PageController@show', ['module:cms_pages']); // content pages (module cms_pages)
         $r->get('/products/{slug}', 'Shop/CatalogController@show');
         $r->post('/products/{slug}/notify', 'Shop/StockAlertController@store', ['module:back_in_stock']);
         $r->post('/products/{slug}/price-alert', 'Shop/PriceAlertController@store', ['module:price_alerts']);
@@ -220,6 +221,14 @@ return function (Router $r): void {
             $r->get('/', 'Admin/DashboardController@index');
             $r->get('/dashboard/data', 'Admin/DashboardController@data');
             $r->get('/analytics', 'Admin/DashboardController@analytics');
+            // Storefront content (module cms_pages): pages and homepage banners.
+            $r->get('/content', 'Admin/ContentController@index', ['module:cms_pages']);
+            $r->post('/content/pages', 'Admin/ContentController@storePage', ['module:cms_pages']);
+            $r->post('/content/pages/{id}', 'Admin/ContentController@updatePage', ['module:cms_pages']);
+            $r->post('/content/pages/{id}/delete', 'Admin/ContentController@deletePage', ['module:cms_pages']);
+            $r->post('/content/banners', 'Admin/ContentController@storeBanner', ['module:cms_pages']);
+            $r->post('/content/banners/{id}', 'Admin/ContentController@updateBanner', ['module:cms_pages']);
+            $r->post('/content/banners/{id}/delete', 'Admin/ContentController@deleteBanner', ['module:cms_pages']);
             $r->get('/staff', 'Admin/StaffController@index');
             $r->get('/staff/create', 'Admin/StaffController@create');
             $r->post('/staff', 'Admin/StaffController@store');
