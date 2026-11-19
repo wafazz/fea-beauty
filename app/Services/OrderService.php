@@ -175,6 +175,13 @@ final class OrderService
             }
             $pdo->commit();
             Queue::later('whatsapp.status', ['order_id' => $orderId, 'status' => $to]); // queued after the commit: a WhatsApp problem cannot undo the change
+            if ($to === 'completed') {
+                try {
+                    MarketingService::onOrderCompleted($orderId); // review request, when marketing flows are on
+                } catch (\Throwable) {
+                    // marketing must never undo or fail an order change
+                }
+            }
             return null;
         } catch (\Throwable $e) {
             $pdo->rollBack();

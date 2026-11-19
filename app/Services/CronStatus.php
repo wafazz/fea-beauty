@@ -21,6 +21,7 @@ final class CronStatus
     public const JOBS = [
         ['worker.php', 'Every minute', 1, 'Sends queued emails and WhatsApp messages'],
         ['abandoned-carts.php', 'Every 10 minutes', 10, 'Abandoned-cart reminders (when that module is on)'],
+        ['marketing.php', 'Every 10 minutes', 10, 'Win-back scheduling and the marketing emails that are due'],
         ['expire-unpaid.php', 'Hourly', 60, 'Cancels unpaid online-payment orders and restocks them'],
         ['subscriptions.php', 'Hourly', 60, 'Runs due subscription cycles'],
         ['module-billing.php', 'Daily', 0, 'Emails admins before a module renews'],

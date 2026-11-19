@@ -127,6 +127,7 @@ Set these up on the server's clock (the server's time zone). Run every job from 
 | `php bin/expire-unpaid.php` | hourly | **Yes** | Cancels unpaid online-payment orders after `UNPAID_HOLD_HOURS` and restocks them. |
 | `php bin/subscriptions.php` | hourly | Yes, if Subscriptions is on | Runs due subscription cycles. |
 | `php bin/abandoned-carts.php` | every 10 minutes | Yes, if Abandoned cart emails is on | Saves member carts and sends abandoned-cart reminders. |
+| `php bin/marketing.php` | every 10 minutes | Yes, if Marketing flows is on | Schedules win-back emails for the chosen segment, and sends the marketing emails that are due. |
 | `php bin/module-billing.php` | daily | Yes, if paid modules are used | Emails admins 7 days before a monthly or yearly module renews. |
 | `php bin/prune-carts.php` | daily, 03:00 | **Yes** | Removes stale guest carts and lapsed cart holds. |
 | `php bin/retention.php` | daily, 03:15 | **Yes** | Deletes old logs, audit rows and visitor counts under the retention rules. |
@@ -147,6 +148,7 @@ Paste these lines and save:
 0 * * * *    cd /var/www/sample-ecom && php bin/expire-unpaid.php >> storage/logs/expire.log 2>&1
 0 * * * *    cd /var/www/sample-ecom && php bin/subscriptions.php >> storage/logs/subscriptions.log 2>&1
 */10 * * * * cd /var/www/sample-ecom && php bin/abandoned-carts.php >> storage/logs/abandoned.log 2>&1
+*/10 * * * * cd /var/www/sample-ecom && php bin/marketing.php >> storage/logs/marketing.log 2>&1
 0 9 * * *    cd /var/www/sample-ecom && php bin/module-billing.php >> storage/logs/billing.log 2>&1
 0 3 * * *    cd /var/www/sample-ecom && php bin/prune-carts.php >> storage/logs/prune.log 2>&1
 15 3 * * *   cd /var/www/sample-ecom && php bin/retention.php >> storage/logs/retention.log 2>&1
@@ -156,7 +158,7 @@ Paste these lines and save:
 
 **Check the setup**
 ```bash
-sudo crontab -u www-data -l                                   # the nine lines are saved
+sudo crontab -u www-data -l                                   # the ten lines are saved
 sudo -u www-data php /var/www/sample-ecom/bin/prune-carts.php # run one job by hand
 tail -n 5 /var/www/sample-ecom/storage/logs/worker.log        # the worker is running
 which php                                                     # if cron jobs fail, use this full path in the lines above

@@ -236,6 +236,9 @@ return function (Router $r): void {
             $r->post('/customers/segments/{id}/delete', 'Admin/CustomerController@deleteSegment', ['module:customer_segments']);
             $r->get('/customers/segments/{id}/export.csv', 'Admin/CustomerController@exportSegment', ['module:customer_segments']);
             $r->post('/customers/{id}/tags', 'Admin/CustomerController@saveTags', ['module:customer_segments']);
+            // Marketing flows (module marketing_flows).
+            $r->get('/marketing', 'Admin/MarketingController@index', ['module:marketing_flows']);
+            $r->post('/marketing/{key}', 'Admin/MarketingController@save', ['module:marketing_flows']);
             $r->get('/staff', 'Admin/StaffController@index');
             $r->get('/staff/create', 'Admin/StaffController@create');
             $r->post('/staff', 'Admin/StaffController@store');

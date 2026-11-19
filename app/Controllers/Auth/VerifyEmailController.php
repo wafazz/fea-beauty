@@ -17,6 +17,7 @@ final class VerifyEmailController extends Controller
         if ($id === null) {
             $this->success('/login', 'That confirmation link is not valid or has expired. Sign in and ask for a new one.');
         }
+        \App\Services\MarketingService::onVerified($id); // welcome email, when marketing flows are on
         $this->success(Auth::check() ? PortalLoginController::landing('member') : '/login', 'Thank you. Your email address is confirmed.');
     }
 

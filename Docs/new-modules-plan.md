@@ -1,6 +1,6 @@
 # New modules plan (items 1–7)
 
-**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Item 2 (Customer segments) is **done** (`083_customer_segments.sql`). Items 3, 5 and 7 are not started.
+**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Item 2 (Customer segments) is **done** (`083_customer_segments.sql`). Item 3 (Marketing flows) is **done** (`084_marketing.sql`). Items 5 and 7 are not started.
 
 Covers the seven modules from the "what else to add" list:
 CMS, customer segments, marketing flows, cross-sell, multiple warehouses, shipping rules, wholesale accounts.
@@ -97,7 +97,16 @@ escapes spreadsheet formulas, and every export is written to the audit log. Test
 **Privacy.** Customers can be told what is stored about them under the PDPA. This module makes that easier, but it
 does not replace a request process. See the Personal data section in the README.
 
-## 3. Marketing flows
+## 3. Marketing flows — DONE
+
+**Built:** three flows (welcome after a member confirms their email, review request after an order is completed,
+win-back to a customer segment once per repeat period). Each is off until switched on, and sends each customer one email
+per trigger (`marketing_sends` is unique per flow, customer and reference). `bin/marketing.php` (every 10 minutes) sends
+the due emails. Unsubscribed people and inactive accounts are skipped; a switched-off flow sends nothing and its emails
+wait. Admin: `/admin/marketing`. Tests: `tests/MarketingFlowsDbTest.php` (14 checks, passing on the `_test` database).
+
+**Decision:** the review request is sent when an order is marked completed, not when a courier reports delivery,
+because courier tracking is not wired up yet. **Not in this build:** WhatsApp as well as email (open question below).
 
 **What it does.** Automatic emails based on a customer's action or a segment: welcome email, review request after
 delivery, and win-back email for customers in a "lapsed" segment.
