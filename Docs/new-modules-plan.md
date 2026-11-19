@@ -1,6 +1,6 @@
 # New modules plan (items 1–7)
 
-**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Items 2, 3, 5 and 7 are not started.
+**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Item 2 (Customer segments) is **done** (`083_customer_segments.sql`). Items 3, 5 and 7 are not started.
 
 Covers the seven modules from the "what else to add" list:
 CMS, customer segments, marketing flows, cross-sell, multiple warehouses, shipping rules, wholesale accounts.
@@ -68,7 +68,15 @@ admin pages under `/admin/content`. Images go through the existing upload servic
 
 **Open questions.** Should banners be multiple per position (rotating)? Should pages support Malay text separately?
 
-## 2. Customer segments
+## 2. Customer segments — DONE
+
+**Built:** saved segments (`customer_segments`, rules as JSON: minimum orders, minimum spend, time window, no order for N
+days, tag), and tags on customers (`customer_tags`, up to 10 each). Members are worked out each time from orders and tags;
+cancelled orders are not counted. Admin: `/admin/customers` (segments, the customer list, tags, CSV export). The CSV
+escapes spreadsheet formulas, and every export is written to the audit log. Tests: `tests/CustomerSegmentsDbTest.php`
+(22 checks, passing on the `_test` database).
+
+**Not in this build:** a permission for staff (admins only); the open questions below are still open.
 
 **What it does.** Groups customers by how they buy: lifetime spend, number of orders, last order date, and tags an admin sets.
 

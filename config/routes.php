@@ -229,6 +229,13 @@ return function (Router $r): void {
             $r->post('/content/banners', 'Admin/ContentController@storeBanner', ['module:cms_pages']);
             $r->post('/content/banners/{id}', 'Admin/ContentController@updateBanner', ['module:cms_pages']);
             $r->post('/content/banners/{id}/delete', 'Admin/ContentController@deleteBanner', ['module:cms_pages']);
+            // Customers and segments (module customer_segments).
+            $r->get('/customers', 'Admin/CustomerController@index', ['module:customer_segments']);
+            $r->post('/customers/segments', 'Admin/CustomerController@storeSegment', ['module:customer_segments']);
+            $r->post('/customers/segments/{id}', 'Admin/CustomerController@updateSegment', ['module:customer_segments']);
+            $r->post('/customers/segments/{id}/delete', 'Admin/CustomerController@deleteSegment', ['module:customer_segments']);
+            $r->get('/customers/segments/{id}/export.csv', 'Admin/CustomerController@exportSegment', ['module:customer_segments']);
+            $r->post('/customers/{id}/tags', 'Admin/CustomerController@saveTags', ['module:customer_segments']);
             $r->get('/staff', 'Admin/StaffController@index');
             $r->get('/staff/create', 'Admin/StaffController@create');
             $r->post('/staff', 'Admin/StaffController@store');
