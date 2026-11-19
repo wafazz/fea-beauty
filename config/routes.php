@@ -252,6 +252,9 @@ return function (Router $r): void {
             $r->post('/vouchers/{id}/email', 'Admin/VoucherController@email', ['module:vouchers']);
             $r->get('/shipping-rates', 'Admin/ShippingRatesController@edit');
             $r->post('/shipping-rates', 'Admin/ShippingRatesController@update');
+            // Business accounts and credit (module wholesale_accounts).
+            $r->get('/wholesale', 'Admin/WholesaleController@index', ['module:wholesale_accounts']);
+            $r->post('/wholesale/{id}', 'Admin/WholesaleController@update', ['module:wholesale_accounts']);
             // Store pickup points (module shipping_rules).
             $r->get('/pickup-points', 'Admin/PickupPointController@index', ['module:shipping_rules']);
             $r->post('/pickup-points', 'Admin/PickupPointController@store', ['module:shipping_rules']);
@@ -464,6 +467,9 @@ return function (Router $r): void {
         $r->group('/member', ['auth:member'], function (Router $r): void {
             $r->get('/', 'Member/DashboardController@index');
             $r->post('/verify-email/resend', 'Auth/VerifyEmailController@resend');
+            // Business (wholesale) account: apply for credit terms (module wholesale_accounts).
+            $r->get('/wholesale', 'Member/WholesaleController@show', ['module:wholesale_accounts']);
+            $r->post('/wholesale', 'Member/WholesaleController@apply', ['module:wholesale_accounts']);
             $r->get('/orders', 'Member/OrderController@index');
             $r->get('/orders/{orderNo}', 'Member/OrderController@show');
             $r->get('/orders/{orderNo}/invoice', 'Shop/InvoiceController@member');

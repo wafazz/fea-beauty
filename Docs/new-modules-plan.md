@@ -1,6 +1,6 @@
 # New modules plan (items 1–7)
 
-**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Item 2 (Customer segments) is **done** (`083_customer_segments.sql`). Item 3 (Marketing flows) is **done** (`084_marketing.sql`). Items 5 and 7 are not started.
+**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Item 1 (Storefront content) is **done** (`082_cms.sql`). Item 2 (Customer segments) is **done** (`083_customer_segments.sql`). Item 3 (Marketing flows) is **done** (`084_marketing.sql`). Item 7 (Wholesale accounts) is **done** (`085_wholesale.sql`). Item 5 (Multiple warehouses) is not started.
 
 Covers the seven modules from the "what else to add" list:
 CMS, customer segments, marketing flows, cross-sell, multiple warehouses, shipping rules, wholesale accounts.
@@ -214,7 +214,18 @@ and the order detail page show the pickup option and point. Checkout totals stay
 **Open questions.** Is the threshold before or after the voucher discount? (Default: after, as the COD rule.) How many
 pickup points, and does a pickup order need a pickup time?
 
-## 7. Wholesale accounts (B2B)
+## 7. Wholesale accounts (B2B) — DONE
+
+**Built:** business members apply at `/member/wholesale`; an admin approves the account at `/admin/wholesale` and sets its
+credit limit and payment terms (default terms 30 days; a limit of 0 means no credit). An approved account can choose
+**Credit terms** at checkout. The order's total must keep the balance within the limit, and this is checked inside a lock
+on the account so two orders cannot both pass it. Credit orders get a due date. Recording a payment is the existing
+"mark paid" action on the order. The ageing report (not yet due, 1-30, 31-60, over 60 days) lists every account with
+unpaid credit orders, suspended accounts included. Tests: `tests/WholesaleDbTest.php` (23 checks, passing on the `_test`
+database).
+
+**Not in this build:** member price groups are assigned by hand on the existing member prices page (not automatic on
+approval); whether invoices show SST is still open.
 
 **What it does.** Approved business buyers can order on credit terms (pay within N days) and get an invoice to pay
 later, instead of paying at checkout.

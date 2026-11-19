@@ -9,7 +9,7 @@ final class Payments
     public static function all(): array
     {
         $out = [];
-        foreach ([new CashOnDelivery(), new BankTransfer(), new Billplz()] as $m) {
+        foreach ([new CashOnDelivery(), new BankTransfer(), new Billplz(), new CreditTerms()] as $m) {
             $out[$m->code()] = $m;
         }
         return $out;

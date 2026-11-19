@@ -154,7 +154,9 @@ final class CheckoutController extends Controller
         }
 
         $method = $request->str('payment_method');
-        if (!isset(Payments::checkoutMethods()[$method])) {
+        // Credit terms are offered only to an approved wholesale account (checked again when the order is placed).
+        $creditOk = $method === \App\Services\WholesaleService::METHOD && \App\Services\WholesaleService::offeredNow();
+        if (!isset(Payments::checkoutMethods()[$method]) && !$creditOk) {
             $errors['payment_method'] = 'Choose a payment method.';
         }
         // Bank transfer: the receipt, the bank paid from and when. Checked before any order exists.
@@ -290,6 +292,9 @@ final class CheckoutController extends Controller
         $hasDigital = array_filter($cart['items'], fn($i) => $i['digital']) !== [];
         if ($hasDigital) {
             unset($methods['cod']);
+        }
+        if (\App\Services\WholesaleService::offeredNow()) {
+            $methods[\App\Services\WholesaleService::METHOD] = new \App\Services\Payment\CreditTerms();
         }
         return $methods;
     }

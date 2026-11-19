@@ -57,6 +57,8 @@ Bank names are chosen from a searchable list of Malaysian banks (Select2, self-h
 
 Payment methods (admin **Payments** page, or staff with `payments.manage`): switch Cash on delivery, Bank transfer and Online banking (Billplz) on or off, and enter the bank account customers transfer to. Bank transfer is only offered once bank name, account number and account name are filled in, and at least one method must stay available.
 
+With the **Wholesale accounts** module on, a business member can apply at `/member/wholesale`. An admin approves the account at `/admin/wholesale` and sets its credit limit and payment terms. An approved account can then choose **Credit terms** at checkout, as long as its unpaid credit orders stay within the limit. Record a payment by marking the order paid; the ageing report there shows what is owed by due date.
+
 Admin-editable (Settings page): guest checkout on/off, flat shipping fee, default affiliate commission %.
 
 **Superadmin and modules.** A superadmin is an admin that can also switch whole features on or off (Superadmin > Modules, `/superadmin/modules`). Admins run the back office but cannot see or change those switches. Superadmins sign in at `/superadmin/login` and work in the admin portal. Create the first one from the command line (the password is prompted):

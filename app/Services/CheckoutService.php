@@ -170,6 +170,14 @@ final class CheckoutService
             // Postage is worked out here from the zone, weight and payment method. The browser never sets it.
             $quote = ShippingRates::quote($shipLines, $subtotal - $discount, (string) $contact['state'], $paymentMethod, $pickupPoint !== null);
             $shipping = $quote['fee'];
+            // Credit terms (wholesale): the account must be approved, and the balance with this order may not go over the limit.
+            $creditAccount = null;
+            if ($paymentMethod === WholesaleService::METHOD) {
+                if ($userId === null) {
+                    throw new CheckoutException('Please sign in to pay on credit terms.');
+                }
+                $creditAccount = WholesaleService::reserveCredit($userId, ($subtotal - $discount + $shipping) / 100);
+            }
             $token = $userId === null ? bin2hex(random_bytes(16)) : null;
             $orderNo = self::newOrderNo();
             // SST is part of the price already paid: worked out here from the final discount, stored on the order and each item.
@@ -191,6 +199,9 @@ final class CheckoutService
                 ]
             );
             $orderId = (int) $pdo->lastInsertId();
+            if ($creditAccount !== null) {
+                Database::query('UPDATE orders SET due_date = ? WHERE id = ?', [date('Y-m-d', strtotime('+' . (int) $creditAccount['terms_days'] . ' days')), $orderId]);
+            }
             if ($userId !== null && $pointsUsed > 0) {
                 LoyaltyService::spend($orderId, $userId, $pointsUsed);
             }

@@ -42,6 +42,7 @@ final class Modules
         'subscriptions' => ['Subscriptions', 'Shoppers subscribe to a product for regular deliveries. Each cycle becomes an order they pay by hand; an unpaid cycle pauses the subscription until it is paid. Off stops new subscriptions and renewals.'],
         'stock_movements' => ['Stock movement log', 'The Stock Movement page and the Movement links on Stock Control. Off hides the page only: stock is still changed and every change is still recorded.'],
         'vouchers' => ['Discount coupons', 'Discount codes shoppers enter at checkout, and the Vouchers menu. Off stops every code at once; orders that already used a code keep their discount.'],
+        'wholesale_accounts' => ['Wholesale accounts', 'Business buyers apply, and an approved account can pay on credit terms (by a due date, up to its credit limit). Admins approve accounts, set limits and terms, and see the ageing report. Off hides the application, the credit option and the Business accounts page; balances are kept.'],
         'marketing_flows' => ['Marketing flows', 'Automatic emails: a welcome email after a member confirms their address, a review request after an order is completed, and a win-back email to a customer segment. Each flow is off until you turn it on. Off sends nothing; waiting emails stay waiting.'],
         'customer_segments' => ['Customer segments', 'Groups of customers by what they buy (orders, spend, last order) and by tags an admin sets, with a CSV export. Off hides the Customers and Segments pages. Nothing is copied or changed by the switch.'],
         'cms_pages' => ['Storefront content', 'Homepage banners and content pages (for example FAQ and policies) that admins manage. Off hides the banners and the pages, and the Content menu.'],
@@ -54,7 +55,7 @@ final class Modules
     public const OFF_BY_DEFAULT = [
         'flash_sales', 'vouchers', 'affiliates', 'digital_products', 'stock_movements', 'price_alerts', 'accounting_export', 'stock_counts', 'quantity_breaks', 'member_prices', 'store_credit', 'preorders', 'purchase_orders', 'subscriptions',
         'abandoned_cart_emails', 'back_in_stock', 'product_csv', 'bulk_pricing', 'returns', 'loyalty', 'gift_cards',
-        'bundles', 'newsletter', 'sales_reports', 'support', 'tax', 'admin_overview', 'cross_sell', 'shipping_rules', 'cms_pages', 'customer_segments', 'marketing_flows',
+        'bundles', 'newsletter', 'sales_reports', 'support', 'tax', 'admin_overview', 'cross_sell', 'shipping_rules', 'cms_pages', 'customer_segments', 'marketing_flows', 'wholesale_accounts',
     ];
 
     public static function enabled(string $key): bool
