@@ -19,6 +19,7 @@ final class ContentController extends Controller
             'title' => 'Storefront content',
             'pages' => CmsService::pages(),
             'banners' => CmsService::banners(),
+            'scripts' => ['content.js'],
         ], 'portal');
     }
 
