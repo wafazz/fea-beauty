@@ -63,6 +63,8 @@ final class WarehouseController extends Controller
             'warehouses' => $warehouses,
             'rows' => $rows,
             'states' => config('states'),
+            'scripts' => ['warehouses.js'],
+            'vendor' => ['select2'],
         ], 'portal');
     }
 

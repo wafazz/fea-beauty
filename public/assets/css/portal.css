@@ -928,6 +928,25 @@ a.vis-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(47
 .pp-hint-ok{color:var(--ok-fg)!important;font-weight:600}
 .pp-preview{padding:.6rem .8rem;border:1px dashed var(--border-strong);border-radius:10px;background:var(--surface-2);overflow-wrap:anywhere}
 .pp-preview strong{color:var(--text)}
+/* Admin > Warehouses: stock table (grid on wide screens, stacked cards on phones) and move-stock form. */
+.wh-table{display:grid;gap:0;margin:.4rem 0;min-width:0}
+.wh-row{display:grid;grid-template-columns:minmax(160px,2fr) minmax(70px,1fr) repeat(auto-fit,minmax(90px,1fr));gap:.5rem;align-items:center;padding:.6rem .4rem;border-bottom:1px solid var(--border);min-width:0;overflow-wrap:anywhere}
+.wh-row[hidden]{display:none}
+.wh-head{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid var(--border-strong)}
+.wh-row.is-low{background:var(--warn-bg)}
+.wh-move .cc-form .wh-all,.wh-move .cc-form .wh-swap{margin-top:.3rem}
+.wh-preview{padding:.6rem .8rem;border:1px dashed var(--border-strong);border-radius:10px;background:var(--surface-2);line-height:1.5}
+.wh-preview strong{color:var(--text)}
+.wh-hint{display:block}
+@media (max-width:640px){
+  .wh-head{display:none}
+  .wh-row{grid-template-columns:1fr 1fr;padding:.7rem .6rem;margin:.4rem 0;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+  .wh-row.is-low{background:var(--warn-bg)}
+  .wh-row>:first-child{grid-column:1/-1}
+  .wh-row [data-label]::before{content:attr(data-label);display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .wh-page .cc-tabs{width:100%}
+  .wh-page .cc-tabs .s-btn{flex:1}
+}
 .cc-form input[aria-invalid=true]{border-color:var(--bad-fg)}
 @media (max-width:560px){.cc-page .cc-actions .btn,.cc-page .cc-actions .s-btn{width:100%}.cc-tabs{width:100%}.cc-tabs .s-btn{flex:1}.cc-item{padding:0 .7rem}}
 .expiry-now strong{color:var(--text)}
