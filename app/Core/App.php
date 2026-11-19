@@ -10,18 +10,35 @@ final class App
         self::registerErrorHandling();
         self::assertProductionConfig();
         self::assertUploadFits();
-        if (\App\Services\VisitorService::serveLive()) {
-            return; // the live poll is answered without a session or routing
+        $active = \App\Services\SystemStatus::isActive();
+        if ($active && \App\Services\VisitorService::serveLive()) {
+            return; // the live poll is answered without a session or routing (an offline site answers nothing)
         }
         Session::start();
         self::securityHeaders();
 
+        $request = Request::capture();
+        if (!$active && !\App\Services\SystemStatus::allows($request)) {
+            self::offline();
+        }
+
         $router = new Router();
         (require BASE_PATH . '/config/routes.php')($router);
-        $request = Request::capture();
         \App\Services\AffiliateService::captureFromQuery($request);
         \App\Services\VisitorService::track($request);
         $router->dispatch($request);
+    }
+
+    /** Store switched off by a superadmin: every page answers 503 with the offline page (JSON for our own scripts). */
+    private static function offline(): never
+    {
+        if (Request::wantsJson()) {
+            Response::json(['ok' => false, 'message' => 'The store is offline for now. Please try again later.'], 503);
+        }
+        http_response_code(503);
+        header('Retry-After: 3600');
+        echo View::render('errors/offline', [], null);
+        exit;
     }
 
     /** A production site must not run with the placeholder key (it salts hashed IPs) or with debug output on. */

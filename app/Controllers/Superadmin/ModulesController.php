@@ -35,7 +35,7 @@ final class ModulesController extends Controller
             'global' => ModulePricing::discountRow('global'),
             'pinCustom' => SuperadminPin::isCustom((int) Auth::user()['id']),
             'audit' => $this->auditRows(),
-            'scripts' => ['modules.js'],
+            'scripts' => ['pin-pad.js', 'modules.js'],
         ], 'portal');
     }
 
@@ -115,7 +115,22 @@ final class ModulesController extends Controller
     /** Security page: change this superadmin's PIN. */
     public function security(Request $request): void
     {
-        $this->view('superadmin/security', ['title' => 'Security', 'custom' => SuperadminPin::isCustom((int) Auth::user()['id'])], 'portal');
+        $this->view('superadmin/security', ['title' => 'Security', 'custom' => SuperadminPin::isCustom((int) Auth::user()['id']), 'scripts' => ['pin-pad.js', 'security.js']], 'portal');
+    }
+
+    /** The Security page checks the current PIN before asking for a new one. Counts a wrong try like the switches do. */
+    public function checkPin(Request $request): void
+    {
+        $check = SuperadminPin::verify((int) Auth::user()['id'], $request->str('current'));
+        if ($check['ok']) {
+            Response::json(['ok' => true]);
+        }
+        $locked = $check['error'] === 'locked';
+        Response::json([
+            'ok' => false,
+            'locked' => $locked,
+            'message' => $locked ? 'Too many wrong PINs. Try again in 15 minutes.' : 'Wrong PIN. Try again.',
+        ], $locked ? 423 : 403);
     }
 
     public function changePin(Request $request): void

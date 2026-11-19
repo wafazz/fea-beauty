@@ -852,6 +852,26 @@ a.vis-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(47
 .mod-status{flex:none;padding:.15rem .65rem;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid var(--border-strong);color:var(--muted);background:var(--surface)}
 .mod-status.is-on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .mod-form{margin-top:auto}
+/* Store status: End date options as tappable cards (radio + label). */
+.expiry-fields{border:0;padding:0;margin:.25rem 0 1rem;display:grid;gap:.5rem;min-width:0}
+.expiry-fields legend{font-weight:600;padding:0;margin-bottom:.4rem}
+.expiry-fields label:has(> input[type=radio]){display:flex;align-items:center;gap:.75rem;min-height:48px;padding:.6rem .9rem;border:1.5px solid var(--border-strong);border-radius:12px;background:var(--surface);color:var(--text);font-weight:500;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:border-color .15s,background-color .15s,box-shadow .15s}
+.expiry-fields label:has(> input[type=radio]):hover{border-color:var(--accent);background:var(--accent-soft)}
+.expiry-fields label:has(> input[type=radio]:checked){border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent);font-weight:600}
+.expiry-fields label:has(> input[type=radio]:active){transform:scale(.99)}
+.expiry-fields input[type=radio]{appearance:none;-webkit-appearance:none;flex:none;width:20px;height:20px;margin:0;border:2px solid var(--border-strong);border-radius:50%;background:var(--surface);display:grid;place-content:center;cursor:pointer;transition:border-color .15s}
+.expiry-fields input[type=radio]::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--accent);transform:scale(0);transition:transform .15s}
+.expiry-fields input[type=radio]:checked{border-color:var(--accent)}
+.expiry-fields input[type=radio]:checked::before{transform:scale(1)}
+.expiry-fields input[type=radio]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.expiry-fields label:not(:has(> input[type=radio])){display:grid;gap:.35rem;font-weight:500}
+.expiry-fields input[type=datetime-local]{min-height:44px;padding:.5rem .7rem;border:1.5px solid var(--border-strong);border-radius:10px;background:var(--surface);color:var(--text);font:inherit}
+.expiry-fields input[type=datetime-local]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.expiry-fields input[type=datetime-local]:disabled{opacity:.45;cursor:not-allowed;background:var(--surface-2)}
+.expiry-now{margin:.25rem 0 .75rem;color:var(--muted)}
+.expiry-now strong{color:var(--text)}
+.expiry-current{display:inline-block;margin-left:auto;padding:.1rem .5rem;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-size:.75rem;font-weight:600;line-height:1.5}
+@media (prefers-reduced-motion: reduce){.expiry-fields *{transition:none !important}}
 .mod-switch{display:flex;align-items:center;justify-content:space-between;gap:.75rem;width:100%;min-height:44px;padding:.35rem 0;border:0;background:none;color:var(--text);font:inherit;font-weight:600;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .mod-switch:disabled{cursor:progress;opacity:.7}
 .mod-switch:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:999px}

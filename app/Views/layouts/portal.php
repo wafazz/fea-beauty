@@ -58,7 +58,7 @@ $groups = match ($role) {
         'Administration' => [['/admin/staff', 'Staff', 'users', 0], ...($newsletterMenu ? [['/admin/newsletter', 'Newsletter', 'heart', 0]] : []), ['/admin/visitors', 'Visitors', 'pin', 0], ['/admin/shipping-rates', 'Shipping rates', 'truck', 0], ['/admin/invoice', 'Invoice details', 'stack', 0], ['/admin/billing', 'Buy Add-On Module', 'card', 0], ['/admin/backup', 'Backup', 'lock', 0], ['/admin/email/announce', 'Announcements', 'heart', 0], ['/admin/payments', 'Payments', 'card', 0], ['/admin/api', 'API Management', 'link', 0, [['/admin/whatsapp', 'WhatsApp', '', 0], ['/admin/email', 'Email', '', 0], ['/admin/payments/billplz', 'Billplz', '', 0], ['/admin/shipping/ninjavan', 'NinjaVan', '', 0], ['/admin/shipping/jnt-express', 'J&T Express', '', 0]]], ['/admin/settings', 'Settings', 'gear', 0]],
         'Account' => [['/admin/profile', 'Profile', 'user', 0], ['/admin/password', 'Password', 'lock', 0]],
     ] + ($role === 'superadmin' ? [
-        'Superadmin' => [['/superadmin/modules', 'Modules', 'gear', 0], ['/superadmin/billing', 'Payment setup', 'card', 0], ['/superadmin/invoices', 'Module invoices', 'coin', 0], ['/superadmin/security', 'Security (PIN)', 'lock', 0]],
+        'Superadmin' => [['/superadmin/system', 'Store status', 'power', 0], ['/superadmin/modules', 'Modules', 'gear', 0], ['/superadmin/billing', 'Payment setup', 'card', 0], ['/superadmin/invoices', 'Module invoices', 'coin', 0], ['/superadmin/security', 'Security (PIN)', 'lock', 0]],
     ] : []),
     'staff' => array_filter([
         'Overview' => [['/staff', 'Dashboard', 'home', 0]],
@@ -108,6 +108,7 @@ $icons = [
     'box' => '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
     'stack' => '<path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/>',
     'swap' => '<path d="M7 7h13M16 3l4 4-4 4"/><path d="M17 17H4M8 13l-4 4 4 4"/>',
+    'power' => '<path d="M18.4 6.6a9 9 0 1 1-12.8 0"/><path d="M12 2v10"/>',
     'lock' => '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/>',
     'tag' => '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/>',
     'cart' => '<circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h9.1a1 1 0 0 0 1-.8L21 7H6"/>',
