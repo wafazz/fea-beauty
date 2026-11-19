@@ -73,6 +73,23 @@ Every module is off until a superadmin switches it on: the 12 newer ones (newsle
 
 A switched-off module returns 404 on its pages, hides its menu items, and stops its storefront blocks and prices. Its data is kept. Flash sales is the first module; to make another one switchable, add it to `Modules::LIST` and guard its routes with `module:<key>`.
 
+## New-order alerts (setup)
+Admins get a chime and a notification when a new order arrives. There are two parts: an alert while the admin page is open, and a browser push that still arrives when the site is closed.
+
+1. **Run the migration:** `php bin/migrate.php` (creates `push_subscriptions`, migration 087).
+2. **Make the VAPID keys, once per site:** `php bin/vapid-keys.php >> .env`. This appends `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`. Run it only once: a second run adds a new pair that takes effect, so every subscribed browser stops receiving pushes until it subscribes again.
+3. **Set `VAPID_SUBJECT`** in `.env` to a real admin contact, `mailto:you@yourdomain` or an `https://` URL. The default is a placeholder.
+4. **Keep the queue worker running.** Pushes go out through `bin/worker.php`, the same cron job as the emails (see **Required cron jobs**). The in-page alert does not need it.
+5. **Each admin turns it on** once: on any admin page, click **Turn on** in the box at the bottom right, then allow notifications in the browser. The browser must be on HTTPS in production (`localhost` also works for testing). On iPhone, the site must first be added to the home screen.
+
+| Key | Notes |
+|---|---|
+| `VAPID_PUBLIC_KEY` | public half of the key pair; shown to browsers when they subscribe |
+| `VAPID_PRIVATE_KEY` | secret; signs push requests. Never commit it or paste it in chat |
+| `VAPID_SUBJECT` | contact for the push services: `mailto:` or `https://` URL |
+
+Only admin and superadmin accounts get order alerts. A push contains the order number and total, and goes through the browser vendor's push service (Google, Mozilla, Apple or Microsoft). Subscriptions are accepted only from those services.
+
 ## Deploy checklist
 1. Point the web root at `public/` (the root `.htaccess` is only a safety net).
 2. `.env`: `APP_ENV=production`, `APP_DEBUG=false`, real `APP_URL` (https), `APP_KEY` from `php -r 'echo bin2hex(random_bytes(32));'`, DB credentials. Never commit `.env`.
@@ -127,7 +144,7 @@ Set these up on the server's clock (the server's time zone). Run every job from 
 
 | Script | Schedule | Needed? | What it does |
 |---|---|---|---|
-| `php bin/worker.php` | every minute | **Yes** | Sends queued emails and WhatsApp messages. Without it, nothing queued is sent. |
+| `php bin/worker.php` | every minute | **Yes** | Sends queued emails, WhatsApp messages and new-order browser pushes. Without it, nothing queued is sent. |
 | `php bin/expire-unpaid.php` | hourly | **Yes** | Cancels unpaid online-payment orders after `UNPAID_HOLD_HOURS` and restocks them. |
 | `php bin/subscriptions.php` | hourly | Yes, if Subscriptions is on | Runs due subscription cycles. |
 | `php bin/abandoned-carts.php` | every 10 minutes | Yes, if Abandoned cart emails is on | Saves member carts and sends abandoned-cart reminders. |
