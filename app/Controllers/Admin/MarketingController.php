@@ -19,6 +19,7 @@ final class MarketingController extends Controller
             'flows' => MarketingService::flows(),
             'stats' => MarketingService::stats(),
             'segments' => CustomerSegmentService::all(),
+            'scripts' => ['marketing.js'],
         ], 'portal');
     }
 
