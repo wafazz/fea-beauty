@@ -31,6 +31,12 @@
                         <input name="<?= e($zone) ?>[<?= e($k) ?>]" inputmode="decimal" value="<?= old($zone . '.' . $k, $rates[$zone][$k] ?? '') ?>" placeholder="<?= str_starts_with($k, 'cod_') ? 'e.g. 5' : 'e.g. 8.00' ?>">
                     </label>
                 <?php endforeach; ?>
+                <?php if (\App\Services\Modules::enabled('shipping_rules')): ?>
+                    <label>Free shipping from (RM, optional)
+                        <input name="<?= e($zone) ?>[free_from]" inputmode="decimal" value="<?= old($zone . '.free_from', $rates[$zone]['free_from'] ?? '') ?>" placeholder="e.g. 150.00">
+                        <small class="muted">Orders at or above this amount (after discounts) pay no postage. Blank removes the threshold.</small>
+                    </label>
+                <?php endif; ?>
             </div>
             <div class="msg-row"><small class="muted">Leave a field blank to keep its saved value.</small><button class="btn">Save <?= e($label) ?></button></div>
         </form>

@@ -1,4 +1,4 @@
-// Checkout: postage and total follow the chosen state and payment method. The server does the maths; this only shows it.
+// Checkout: postage and total follow the chosen state, payment method and delivery or pickup. The server does the maths; this only shows it.
 (function () {
   var form = document.querySelector('.co-form[data-shipping-url]');
   if (!form) return;
@@ -16,9 +16,21 @@
     return el ? el.value : '';
   }
 
+  // Delivery shows the address; pickup shows the pickup point choice instead.
+  function showFulfilment() {
+    var pickup = field('fulfilment') === 'pickup';
+    var address = form.querySelector('[data-address-block]');
+    var choice = form.querySelector('[data-pickup-choice]');
+    if (address) address.hidden = pickup;
+    if (choice) choice.hidden = !pickup;
+  }
+
   function refresh() {
     var mine = ++latest;
-    var query = '?state=' + encodeURIComponent(field('state')) + '&payment_method=' + encodeURIComponent(field('payment_method'));
+    var query = '?state=' + encodeURIComponent(field('state')) +
+      '&payment_method=' + encodeURIComponent(field('payment_method')) +
+      '&fulfilment=' + encodeURIComponent(field('fulfilment')) +
+      '&pickup_point_id=' + encodeURIComponent(field('pickup_point_id'));
     fetch(url + query, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
       .then(function (r) { return r.json(); })
       .then(function (d) {
@@ -40,6 +52,9 @@
   }
 
   form.addEventListener('change', function (e) {
-    if (e.target.name === 'state' || e.target.name === 'payment_method') refresh();
+    var n = e.target.name;
+    if (n === 'fulfilment') showFulfilment();
+    if (n === 'state' || n === 'payment_method' || n === 'fulfilment' || n === 'pickup_point_id') refresh();
   });
+  showFulfilment();
 })();

@@ -34,6 +34,21 @@ $defaultMethod = isset($methods['cod']) ? 'cod' : (string) array_key_first($meth
 
     <section class="co-card">
         <h2><span class="num-dot">2</span> Delivery address</h2>
+        <?php if (!empty($pickupPoints)): ?>
+            <fieldset class="co-fulfil">
+                <legend>How do you want to get your order?</legend>
+                <label class="check"><input type="radio" name="fulfilment" value="delivery" <?= old('fulfilment', 'delivery') === 'delivery' ? 'checked' : '' ?>> Deliver to my address</label>
+                <label class="check"><input type="radio" name="fulfilment" value="pickup" <?= old('fulfilment', 'delivery') === 'pickup' ? 'checked' : '' ?>> Pick up at a store (no postage)</label>
+                <label data-pickup-choice <?= old('fulfilment', 'delivery') === 'pickup' ? '' : 'hidden' ?>>Pickup point
+                    <select name="pickup_point_id">
+                        <option value="">Select…</option>
+                        <?php foreach ($pickupPoints as $p): ?>
+                            <option value="<?= (int) $p['id'] ?>" <?= (string) old('pickup_point_id', '') === (string) $p['id'] ? 'selected' : '' ?>><?= e($p['name'] . ' · ' . $p['city'] . ', ' . $p['state'] . ($p['opening_hours'] ? ' · ' . $p['opening_hours'] : '')) ?></option>
+                        <?php endforeach; ?>
+                    </select><?= field_error('pickup_point_id') ?></label>
+            </fieldset>
+        <?php endif; ?>
+        <div data-address-block>
         <?php if ($saved !== []): ?>
             <p class="saved-addresses">Saved addresses:
                 <?php foreach ($saved as $a): ?>
@@ -58,6 +73,7 @@ $defaultMethod = isset($methods['cod']) ? 'cod' : (string) array_key_first($meth
         <?php if ($canSave): ?>
             <label class="check"><input type="checkbox" name="save_address" value="1" <?= old('save_address', $saved === [] ? '1' : '') === '1' ? 'checked' : '' ?>> Save this address to my account</label>
         <?php endif; ?>
+        </div>
     </section>
 
     <section class="co-card">

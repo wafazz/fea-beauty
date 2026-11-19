@@ -160,8 +160,15 @@ final class CheckoutService
                 $discount += $creditUsed;
             }
 
+            // Pickup (shipping rules): the point's address replaces the delivery address, and no postage is charged.
+            $pickupPoint = null;
+            if (($contact['fulfilment'] ?? 'delivery') === 'pickup') {
+                $pickupPoint = PickupPointService::forCheckout((int) ($contact['pickup_point_id'] ?? 0));
+                $contact = array_merge($contact, ['line1' => $pickupPoint['line1'], 'line2' => '', 'city' => $pickupPoint['city'], 'state' => $pickupPoint['state'], 'postcode' => $pickupPoint['postcode']]);
+            }
+            $fulfilment = $pickupPoint !== null ? 'pickup' : 'delivery';
             // Postage is worked out here from the zone, weight and payment method. The browser never sets it.
-            $quote = ShippingRates::quote($shipLines, $subtotal - $discount, (string) $contact['state'], $paymentMethod);
+            $quote = ShippingRates::quote($shipLines, $subtotal - $discount, (string) $contact['state'], $paymentMethod, $pickupPoint !== null);
             $shipping = $quote['fee'];
             $token = $userId === null ? bin2hex(random_bytes(16)) : null;
             $orderNo = self::newOrderNo();
@@ -171,8 +178,8 @@ final class CheckoutService
             Database::query(
                 'INSERT INTO orders (order_no, user_id, customer_name, customer_email, customer_phone, ship_line1, ship_line2, ship_city, ship_state, ship_postcode,
                                      subtotal, shipping_fee, total, payment_method, track_hash, notes, affiliate_id, voucher_id, voucher_code, discount_total,
-                                     shipping_zone, billable_kg, cod_fee, tax_total)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                                     shipping_zone, billable_kg, cod_fee, tax_total, fulfilment, pickup_point_id, pickup_name)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                 [
                     $orderNo, $userId, $contact['name'], strtolower($contact['email']), $contact['phone'],
                     $contact['line1'], $contact['line2'] ?: null, $contact['city'], $contact['state'], $contact['postcode'],
@@ -180,6 +187,7 @@ final class CheckoutService
                     $paymentMethod, $token === null ? null : hash('sha256', $token), $contact['notes'] ?: null, $affiliateId,
                     $voucher === null ? null : (int) $voucher['id'], $voucher === null ? null : $voucher['code'], PricingService::format($discount),
                     $quote['zone'], $quote['kg'], PricingService::format($quote['cod']), PricingService::format($taxTotal),
+                    $fulfilment, $pickupPoint['id'] ?? null, $pickupPoint['name'] ?? null,
                 ]
             );
             $orderId = (int) $pdo->lastInsertId();

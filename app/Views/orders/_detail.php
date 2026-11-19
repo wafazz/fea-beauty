@@ -31,6 +31,9 @@ $cost = 0;
             <tr><td colspan="3" class="num">Discount<?= $order['voucher_code'] ? ' (' . e($order['voucher_code']) . ')' : '' ?></td><td class="num">−<?= e(money($order['discount_total'])) ?></td></tr>
         <?php endif; ?>
         <tr><td colspan="3" class="num">Shipping</td><td class="num"><?= e(money($order['shipping_fee'])) ?></td></tr>
+        <?php if (($order['fulfilment'] ?? 'delivery') === 'pickup'): ?>
+            <tr><td colspan="4"><strong>Customer collects at:</strong> <?= e($order['pickup_name'] ?: 'pickup point (removed)') ?> · <?= e($order['ship_line1']) ?>, <?= e($order['ship_city']) ?> <?= e($order['ship_postcode']) ?>. Do not ship this order.</td></tr>
+        <?php endif; ?>
         <?php if ((float) ($order['tax_total'] ?? 0) > 0): ?><tr><td colspan="3" class="num">Included SST</td><td class="num"><?= e(money($order['tax_total'])) ?></td></tr><?php endif; ?>
         <tr><td colspan="3" class="num"><strong>Total</strong></td><td class="num"><strong><?= e(money($order['total'])) ?></strong></td></tr>
         <?php if ($showCost): ?>

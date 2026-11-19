@@ -233,6 +233,10 @@ return function (Router $r): void {
             $r->post('/vouchers/{id}/email', 'Admin/VoucherController@email', ['module:vouchers']);
             $r->get('/shipping-rates', 'Admin/ShippingRatesController@edit');
             $r->post('/shipping-rates', 'Admin/ShippingRatesController@update');
+            // Store pickup points (module shipping_rules).
+            $r->get('/pickup-points', 'Admin/PickupPointController@index', ['module:shipping_rules']);
+            $r->post('/pickup-points', 'Admin/PickupPointController@store', ['module:shipping_rules']);
+            $r->post('/pickup-points/{id}', 'Admin/PickupPointController@update', ['module:shipping_rules']);
             $r->get('/invoice', 'Admin/InvoiceSettingsController@edit');
             $r->post('/invoice', 'Admin/InvoiceSettingsController@update');
             $r->get('/backup', 'Admin/BackupController@index');

@@ -45,6 +45,13 @@ final class ShippingRates
         return $out;
     }
 
+    /** The free-shipping threshold for a zone in cents, or null when none is set. Only used while shipping_rules is on. */
+    public static function freeFrom(string $zone): ?int
+    {
+        $v = trim((string) Setting::get("shipping.{$zone}.free_from", ''));
+        return $v === '' ? null : PricingService::cents($v);
+    }
+
     /**
      * Price the delivery.
      * @param array<int,array{weight_kg:string|float|null, qty:int}> $lines
@@ -54,16 +61,26 @@ final class ShippingRates
      * @return array{zone:?string, kg:?int, actual_kg:string, normal:int, cod:int, fee:int} cents
      * @throws CheckoutException when a product has no weight, or the zone's rates are not set
      */
-    public static function quote(array $lines, int $subtotalCents, string $state, string $method): array
+    public static function quote(array $lines, int $subtotalCents, string $state, string $method, bool $pickup = false): array
     {
         $physical = array_filter($lines, fn($l) => empty($l['digital']));
         if ($physical === []) {
-            return ['zone' => null, 'kg' => null, 'actual_kg' => '0.000', 'normal' => 0, 'cod' => 0, 'fee' => 0]; // nothing ships
+            return ['zone' => null, 'kg' => null, 'actual_kg' => '0.000', 'normal' => 0, 'cod' => 0, 'fee' => 0, 'free' => false]; // nothing ships
         }
         $zone = self::zoneFor($state);
         $r = self::rates($zone);
         if ($r === null) {
             throw new CheckoutException('Shipping rates for ' . self::ZONES[$zone] . ' are not set yet. Please try again later.');
+        }
+        // Shipping rules (module shipping_rules): a store pickup pays no postage, and so does an order at or above the
+        // zone's free-shipping threshold. The COD surcharge is never removed by either.
+        $freeReason = null;
+        if (Modules::enabled('shipping_rules')) {
+            if ($pickup) {
+                $freeReason = 'pickup';
+            } elseif (($from = self::freeFrom($zone)) !== null && $subtotalCents >= $from) {
+                $freeReason = 'threshold';
+            }
         }
 
         $grams = 0;
@@ -78,7 +95,7 @@ final class ShippingRates
             $grams += (int) round($w * 1000) * (int) $l['qty'];
         }
         $kg = max(1, (int) ceil($grams / 1000));
-        $normal = $r['first'] + max(0, $kg - 1) * $r['next'];
+        $normal = $freeReason !== null ? 0 : $r['first'] + max(0, $kg - 1) * $r['next'];
 
         $cod = 0;
         if ($method === 'cod') {
@@ -92,6 +109,7 @@ final class ShippingRates
             'normal' => $normal,
             'cod' => $cod,
             'fee' => $normal + $cod,
+            'free' => $freeReason, // null, 'threshold' or 'pickup'
         ];
     }
 
@@ -123,6 +141,14 @@ final class ShippingRates
                 $errors[] = $label . ' is not a valid ' . ($isPercent ? 'percent (0 to 100).' : 'amount.');
             }
         }
+        // Free-shipping threshold (shipping rules): optional, blank clears it. Only handled when the form sent the field.
+        $freeFrom = null;
+        if (array_key_exists('free_from', $in)) {
+            $freeFrom = trim((string) $in['free_from']);
+            if ($freeFrom !== '' && !PricingService::isMoney($freeFrom)) {
+                $errors[] = 'Free-shipping threshold is not a valid amount.';
+            }
+        }
         if ($errors !== []) {
             return $errors;
         }
@@ -133,6 +159,10 @@ final class ShippingRates
                 Setting::set("shipping.{$zone}.{$k}", $v);
                 $changed[] = $k;
             }
+        }
+        if ($freeFrom !== null && $freeFrom !== (string) Setting::get("shipping.{$zone}.free_from", '')) {
+            Setting::set("shipping.{$zone}.free_from", $freeFrom);
+            $changed[] = 'free_from';
         }
         if ($changed !== []) {
             AuditService::log($actorId, 'shipping.rates', self::ZONES[$zone] . ' changed: ' . implode(', ', $changed));
@@ -163,6 +193,7 @@ final class ShippingRates
             foreach (array_keys(self::FIELDS) as $k) {
                 $out[$zone][$k] = (string) Setting::get("shipping.{$zone}.{$k}", '');
             }
+            $out[$zone]['free_from'] = (string) Setting::get("shipping.{$zone}.free_from", '');
         }
         return $out;
     }

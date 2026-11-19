@@ -104,6 +104,7 @@ final class CheckoutController extends Controller
             'pickedId' => $picked !== null ? (int) $picked['id'] : null,
             'canSave' => $member !== null && count($saved) < AddressService::MAX,
             'states' => config('states'),
+            'pickupPoints' => \App\Services\PickupPointService::active(), // empty unless shipping_rules is on
             'methods' => $this->methodsFor($cart),
             'shipping_cents' => $ship['fee'],
             'bank' => PaymentSettings::bank(),
@@ -138,8 +139,19 @@ final class CheckoutController extends Controller
         if ($memberId !== null) {
             $in['email'] = $me['email'];
         }
-        $errors = (new Validator($in, ['email' => 'required|email|max:190', 'notes' => 'max:500']))->errors()
-            + AddressService::validate($in);
+        // Pickup (shipping rules): no delivery address is needed, but a valid pickup point is.
+        $in['fulfilment'] = $request->str('fulfilment') === 'pickup' && \App\Services\Modules::enabled('shipping_rules') ? 'pickup' : 'delivery';
+        $in['pickup_point_id'] = $request->str('pickup_point_id');
+        $errors = (new Validator($in, ['email' => 'required|email|max:190', 'notes' => 'max:500']))->errors();
+        if ($in['fulfilment'] === 'pickup') {
+            try {
+                \App\Services\PickupPointService::forCheckout((int) $in['pickup_point_id']);
+            } catch (CheckoutException $e) {
+                $errors['pickup_point_id'] = $e->getMessage();
+            }
+        } else {
+            $errors += AddressService::validate($in);
+        }
 
         $method = $request->str('payment_method');
         if (!isset(Payments::checkoutMethods()[$method])) {
@@ -260,11 +272,11 @@ final class CheckoutController extends Controller
      * The postage the checkout page shows, from the cart's own data: never a figure sent by the browser.
      * @return array{ok:bool, error:?string, fee:int, cod:int, zone:?string, kg:?int, actual_kg:?string}
      */
-    private function shippingFor(array $cart, string $state, string $method, int $discount): array
+    private function shippingFor(array $cart, string $state, string $method, int $discount, bool $pickup = false): array
     {
         $lines = array_map(fn($i) => ['weight_kg' => $i['weight_kg'], 'qty' => (int) $i['qty'], 'digital' => $i['digital']], $cart['items']);
         try {
-            $q = ShippingRates::quote($lines, (int) $cart['subtotal_cents'] - $discount, $state, $method);
+            $q = ShippingRates::quote($lines, (int) $cart['subtotal_cents'] - $discount, $state, $method, $pickup);
             return ['ok' => true, 'error' => null, 'fee' => $q['fee'], 'cod' => $q['cod'], 'zone' => $q['zone'], 'kg' => $q['kg'], 'actual_kg' => $q['actual_kg']];
         } catch (CheckoutException $e) {
             return ['ok' => false, 'error' => $e->getMessage(), 'fee' => 0, 'cod' => 0, 'zone' => null, 'kg' => null, 'actual_kg' => null];
@@ -421,7 +433,17 @@ final class CheckoutController extends Controller
             Response::json(['ok' => false, 'error' => 'Your cart is empty.', 'shipping' => money(0), 'total' => money(0)]);
         }
         $discount = $this->discountFor($cart);
-        $ship = $this->shippingFor($cart, $request->str('state'), $request->str('payment_method'), $discount);
+        $state = $request->str('state');
+        // Pickup: postage is nil, and the zone (for the COD rate) comes from the chosen point.
+        $pickup = $request->str('fulfilment') === 'pickup' && \App\Services\Modules::enabled('shipping_rules');
+        if ($pickup) {
+            try {
+                $state = (string) \App\Services\PickupPointService::forCheckout((int) $request->str('pickup_point_id'))['state'];
+            } catch (CheckoutException $e) {
+                Response::json(['ok' => false, 'error' => $e->getMessage(), 'shipping' => money(0), 'total' => money(((int) $cart['subtotal_cents'] - $discount) / 100)]);
+            }
+        }
+        $ship = $this->shippingFor($cart, $state, $request->str('payment_method'), $discount, $pickup);
         $total = (int) $cart['subtotal_cents'] - $discount + $ship['fee'];
         Response::json([
             'ok' => $ship['ok'],

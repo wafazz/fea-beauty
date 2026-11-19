@@ -1,6 +1,6 @@
 # New modules plan (items 1–7)
 
-**Status:** item 4 (Cross-sell suggestions) is **done**, built as migration `080_cross_sell.sql`. Items 1, 2, 3, 5, 6 and 7 are not started.
+**Status:** item 4 (Cross-sell suggestions) is **done** (`080_cross_sell.sql`). Item 6 (Shipping rules) is **done** (`081_shipping_rules.sql`). Items 1, 2, 3, 5 and 7 are not started.
 
 Covers the seven modules from the "what else to add" list:
 CMS, customer segments, marketing flows, cross-sell, multiple warehouses, shipping rules, wholesale accounts.
@@ -157,7 +157,15 @@ backup taken as in the deploy checklist.
 **Open questions.** How many locations at first? If the nearest one is empty, should the order fall back to another
 location or be refused? Is the location shown to the customer?
 
-## 6. Shipping rules
+## 6. Shipping rules — DONE
+
+**Built:** a free-shipping threshold per zone (at or above, after discounts; the COD surcharge stays), and store pickup
+points (`pickup_points`). Checkout offers "Pick up at a store" when points exist; a pickup order uses the point's
+address, pays no postage, and records the point and its name. Admin: thresholds on `/admin/shipping-rates`, points on
+`/admin/pickup-points`. Tests: `tests/ShippingRulesDbTest.php` (15 checks, passing on the `_test` database).
+
+**Not in this build:** pickup times; the open questions below are still open.
+
 
 **What it does.** Two extra options on top of the weight-based postage:
 - **Free shipping** above a set order value (per zone).
