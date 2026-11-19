@@ -140,6 +140,11 @@ return function (Router $r): void {
         $r->group('/admin', ['auth:admin'], fn(Router $r) => $r->get('/search', 'Manage/SearchController@index'));
 
         // Sales API tokens for CodexLure: admin only, deliberately not linked from the menu.
+        // Browser push for new-order alerts: each admin's own browsers (admin and superadmin only).
+        $r->group('/admin', ['auth:admin'], function (Router $r): void {
+            $r->post('/push/subscribe', 'Manage/PushController@subscribe');
+            $r->post('/push/unsubscribe', 'Manage/PushController@unsubscribe');
+        });
         $r->group('/admin', ['auth:admin'], function (Router $r): void {
             $r->get('/sales-api-tokens', 'Manage/SalesApiTokenController@index');
             $r->post('/sales-api-tokens', 'Manage/SalesApiTokenController@create');
@@ -150,6 +155,7 @@ return function (Router $r): void {
         // Order management: admin passes every permission check, staff need orders.view / orders.update.
         $orders = function (Router $r): void {
             $r->get('/orders', 'Manage/OrderController@index', ['permission:orders.view']);
+            $r->get('/orders/counts', 'Manage/OrderController@counts', ['permission:orders.view']);
             $r->get('/orders/{id}', 'Manage/OrderController@show', ['permission:orders.view']);
             $r->post('/orders/{id}/status', 'Manage/OrderController@status', ['permission:orders.update']);
             $r->post('/orders/{id}/approve', 'Manage/OrderController@approve', ['permission:orders.update']);

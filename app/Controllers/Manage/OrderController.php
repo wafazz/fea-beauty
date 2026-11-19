@@ -6,6 +6,7 @@ namespace App\Controllers\Manage;
 use App\Core\Auth;
 use App\Core\Database;
 use App\Core\Request;
+use App\Core\Response;
 use App\Services\AddressService;
 use App\Services\JntExpressSettings;
 use App\Services\OrderService;
@@ -17,6 +18,17 @@ use App\Services\Payment\Payments;
 final class OrderController extends ManageController
 {
     private const PER_PAGE = 20;
+
+    /** Newest order, for the admin's live new-order alert (polled; see public/assets/js/order-alerts.js). */
+    public function counts(Request $request): void
+    {
+        $latest = Database::query('SELECT id, order_no FROM orders ORDER BY id DESC LIMIT 1')->fetch();
+        Response::json([
+            'latest_id' => $latest ? (int) $latest['id'] : 0,
+            'latest_title' => $latest ? 'New order ' . $latest['order_no'] : 'New order',
+            'latest_url' => $latest ? url($this->base() . '/orders/' . $latest['id']) : null,
+        ]);
+    }
 
     public function index(Request $request): void
     {
