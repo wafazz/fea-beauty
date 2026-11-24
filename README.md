@@ -1,4 +1,4 @@
-# Lure Shop
+# FEA Beauty
 
 Vanilla PHP 8 MVC e-commerce: public shop (guest + member checkout), admin / staff / member portals, product variants, orders, affiliate links and commissions. No framework, no Composer.
 
