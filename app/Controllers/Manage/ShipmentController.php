@@ -6,10 +6,12 @@ namespace App\Controllers\Manage;
 use App\Core\Auth;
 use App\Core\Request;
 use App\Core\Response;
+use App\Services\ManualShipmentService;
 use App\Services\NinjaVanSettings;
 use App\Services\OrderService;
 use App\Services\Shipping\JntExpressGateway;
 use App\Services\Shipping\NinjaVanGateway;
+use App\Services\Shipping\SpxExpressGateway;
 use App\Services\ShipmentService;
 
 /** NinjaVan shipments from the order page. create/cancel need orders.update, the waybill needs orders.view. */
@@ -37,12 +39,62 @@ final class ShipmentController extends ManageController
         $r['ok'] ? $this->success($back, "Pushed {$order['order_no']} to J&T Express. Tracking number {$r['tracking']}.") : $this->backWithErrors($back, ['form' => $r['error']]);
     }
 
+    /** Push a Processing order to SPX Express (from the order list). Needs orders.update. */
+    public function pushSpx(Request $request, string $id): void
+    {
+        $order = OrderService::find((int) $id) ?? Response::abort(404);
+        $back = $this->base() . '/orders?status=processing';
+        $r = SpxExpressGateway::create((int) $order['id'], (int) Auth::user()['id']);
+        $r['ok'] ? $this->success($back, "Pushed {$order['order_no']} to SPX Express. Tracking number {$r['tracking']}.") : $this->backWithErrors($back, ['form' => $r['error']]);
+    }
+
+    /** Book a courier the seller arranged outside the system (tracking number, optional link and AWB). Needs orders.update. */
+    public function manual(Request $request, string $id): void
+    {
+        $order = OrderService::find((int) $id) ?? Response::abort(404);
+        $back = $this->base() . "/orders/{$order['id']}#shipping";
+        $r = ManualShipmentService::create((int) $order['id'], $request->body, $_FILES['awb'] ?? null, (int) Auth::user()['id']);
+        if (!$r['ok']) {
+            $this->backWithErrors($back, ($r['fields'] ?? []) + ['form' => $r['error']], array_intersect_key($request->body, array_flip(['courier', 'tracking_number', 'tracking_url'])));
+        }
+        $this->success($this->base() . '/orders?status=processing', "Courier added. Tracking number {$r['tracking']}.");
+    }
+
+    /** Attach or replace the AWB of the active manual shipment. Needs orders.update. */
+    public function uploadManualAwb(Request $request, string $id): void
+    {
+        $order = OrderService::find((int) $id) ?? Response::abort(404);
+        $back = $this->base() . "/orders/{$order['id']}#shipping";
+        $error = ManualShipmentService::attachAwb((int) $order['id'], $_FILES['awb'] ?? null, (int) Auth::user()['id']);
+        $error === null ? $this->success($back, 'AWB uploaded.') : $this->backWithErrors($back, ['awb' => $error, 'form' => $error]);
+    }
+
+    /** The AWB file of the active manual shipment. Needs orders.view. */
+    public function manualAwb(Request $request, string $id): void
+    {
+        $order = OrderService::find((int) $id) ?? Response::abort(404);
+        $ship = ShipmentService::active((int) $order['id']) ?? Response::abort(404);
+        if (($ship['source'] ?? 'api') !== 'manual' || empty($ship['awb_file'])) {
+            Response::abort(404);
+        }
+        ManualShipmentService::sendAwb($ship);
+    }
+
     public function cancel(Request $request, string $id): void
     {
         $order = OrderService::find((int) $id) ?? Response::abort(404);
         $back = $this->base() . "/orders/{$order['id']}#shipping";
-        if ((ShipmentService::active((int) $order['id'])['carrier'] ?? '') === 'jnt') {
+        $active = ShipmentService::active((int) $order['id']);
+        if (($active['source'] ?? 'api') === 'manual') {
+            ManualShipmentService::cancel((int) $order['id'], (int) Auth::user()['id']) ? $this->success($back, 'Courier booking removed.') : $this->backWithErrors($back, ['form' => 'No active courier booking to cancel.']);
+        }
+        $carrier = $active['carrier'] ?? '';
+        if ($carrier === 'jnt') {
             $this->backWithErrors($back, ['form' => 'J&T Express shipments are cancelled in the J&T portal for now.']);
+        }
+        if ($carrier === 'spx') {
+            $r = SpxExpressGateway::cancel((int) $order['id'], (int) Auth::user()['id']);
+            $r['ok'] ? $this->success($back, 'SPX Express shipment cancelled.') : $this->backWithErrors($back, ['form' => $r['error']]);
         }
         $r = NinjaVanGateway::cancel((int) $order['id'], (int) Auth::user()['id']);
         $r['ok'] ? $this->success($back, 'Shipment cancelled.') : $this->backWithErrors($back, ['form' => $r['error']]);
@@ -53,6 +105,9 @@ final class ShipmentController extends ManageController
     {
         $order = OrderService::find((int) $id) ?? Response::abort(404);
         $ship = ShipmentService::active((int) $order['id']) ?? Response::abort(404);
+        if (($ship['source'] ?? 'api') === 'manual') {
+            Response::abort(404); // a manually added courier has its own AWB file: see manualAwb()
+        }
         header('Cache-Control: private, no-store');
         header('X-Content-Type-Options: nosniff');
         $this->view('manage/orders/awb', [
@@ -71,7 +126,8 @@ final class ShipmentController extends ManageController
         $ids = $this->ids($request);
         $orders = OrderService::findAmong($ids);
         $ships = ShipmentService::activeAmong($ids);
-        $ready = array_values(array_filter($ids, fn($id) => isset($orders[$id], $ships[$id]) && $orders[$id]['status'] === 'processing'));
+        // Manually added couriers carry their own AWB file, so they are not part of this print run.
+        $ready = array_values(array_filter($ids, fn($id) => isset($orders[$id], $ships[$id]) && $orders[$id]['status'] === 'processing' && ($ships[$id]['source'] ?? 'api') !== 'manual'));
         if ($ready === []) {
             $this->backWithErrors($this->base() . '/orders?status=processing', ['form' => 'None of the selected orders is ready to print. Only Processing orders with a tracking number can be printed.']);
         }
@@ -115,8 +171,25 @@ final class ShipmentController extends ManageController
     {
         $order = OrderService::find((int) $id) ?? Response::abort(404);
         $s = ShipmentService::active((int) $order['id']) ?? Response::abort(404);
+        if (($s['source'] ?? 'api') === 'manual') {
+            $this->backWithErrors($this->base() . "/orders/{$order['id']}#shipping", ['form' => 'This courier was added manually. Use View AWB to open its file.']);
+        }
         if ($s['carrier'] === 'jnt') {
             $this->backWithErrors($this->base() . "/orders/{$order['id']}#shipping", ['form' => 'Use Print AWB for J&T Express shipments.']);
+        }
+        if ($s['carrier'] === 'spx') {
+            // SPX's label link expires after 30 minutes, so it is fetched now and sent straight on.
+            $r = SpxExpressGateway::waybillUrl($s);
+            // The link comes from SPX's response: only an https URL with no control characters may reach the Location header.
+            if ($r['ok'] && (!str_starts_with($r['url'], 'https://') || preg_match('/[\x00-\x1F\x7F]/', $r['url']) || filter_var($r['url'], FILTER_VALIDATE_URL) === false)) {
+                $r = ['ok' => false, 'error' => 'SPX returned a waybill link we could not open safely.'];
+            }
+            if (!$r['ok']) {
+                $this->backWithErrors($this->base() . "/orders/{$order['id']}#shipping", ['form' => $r['error']]);
+            }
+            header('Cache-Control: private, no-store');
+            header('Location: ' . $r['url'], true, 302);
+            exit;
         }
         $r = NinjaVanGateway::waybill($s);
         if (!$r['ok']) {

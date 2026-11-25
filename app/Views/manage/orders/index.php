@@ -31,7 +31,7 @@ $checkIcon = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M
     <p class="ot-empty">No orders here yet.</p>
 <?php else: ?>
     <?php
-    $printable = count(array_filter($orders, fn($o) => $o['status'] === 'processing' && isset($shipments[(int) $o['id']])));
+    $printable = count(array_filter($orders, fn($o) => $o['status'] === 'processing' && isset($shipments[(int) $o['id']]) && ($shipments[(int) $o['id']]['source'] ?? 'api') !== 'manual'));
     if ($filters['status'] === 'processing'): ?>
     <nav class="ot-chips" aria-label="Processing orders">
         <a href="<?= e(url($base . '/orders?status=processing')) ?>" class="<?= $filters['printed'] === '1' ? '' : 'on' ?>">All processing <span class="ot-count"><?= (int) ($counts['processing'] ?? 0) ?></span></a>
@@ -107,7 +107,7 @@ $checkIcon = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M
         </ul>
 
         <footer class="ot-foot">
-            <?php if ($o['status'] === 'processing' && isset($shipments[$__id])): ?>
+            <?php if ($o['status'] === 'processing' && isset($shipments[$__id]) && ($shipments[$__id]['source'] ?? 'api') !== 'manual'): ?>
                 <label class="ot-select"><input type="checkbox" data-awb-select value="<?= $__id ?>" data-cod="<?= $o['payment_method'] === 'cod' ? '1' : '0' ?>" data-paid="<?= $o['payment_status'] === 'paid' ? '1' : '0' ?>"> <?= $filters['printed'] === '1' ? 'Select' : 'Select to print' ?></label>
             <?php endif; ?>
             <?php if ($o['payment_method'] === 'bank_transfer'): ?>
@@ -165,7 +165,20 @@ $checkIcon = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M
                     <form method="post" action="<?= e(url($base . '/orders/' . $__id . '/jnt/push')) ?>" class="inline" data-swal-confirm="Push order <?= e($o['order_no']) ?> to J&amp;T Express?" data-swal-text="J&amp;T will create the waybill for this order." data-swal-button="Yes, push it">
                         <?= csrf_field() ?><button class="ot-view ot-push">Push to J&amp;T Express</button></form>
                 <?php endif; ?>
-                <?php if ($o['status'] === 'processing' && isset($shipments[$__id])): ?>
+                <?php if ($o['status'] === 'processing' && $canUpdate && !isset($shipments[$__id]) && !empty($spxOn)): ?>
+                    <form method="post" action="<?= e(url($base . '/orders/' . $__id . '/spx/push')) ?>" class="inline" data-swal-confirm="Push order <?= e($o['order_no']) ?> to SPX Express?" data-swal-text="SPX will create the waybill for this order." data-swal-button="Yes, push it">
+                        <?= csrf_field() ?><button class="ot-view ot-push">Push to SPX Express</button></form>
+                <?php endif; ?>
+                <?php if ($o['status'] === 'processing' && $canUpdate && !isset($shipments[$__id])): ?>
+                    <a class="ot-view ot-push" href="<?= e(url($__viewUrl . '#shipping')) ?>" data-order-details="<?= e(url($__viewUrl . '?popup=1')) ?>" data-order-no="<?= e($o['order_no']) ?>" data-scroll-to="#shipping">Add courier</a>
+                <?php endif; ?>
+                <?php if ($o['status'] === 'processing' && isset($shipments[$__id]) && ($shipments[$__id]['source'] ?? 'api') === 'manual'): ?>
+                    <?php if (!empty($shipments[$__id]['awb_file'])): ?>
+                        <a class="ot-view ot-print" href="<?= e(url($base . '/orders/' . $__id . '/shipment/manual-awb')) ?>" target="_blank" rel="noopener">View AWB</a>
+                    <?php endif; ?>
+                <?php elseif ($o['status'] === 'processing' && isset($shipments[$__id]) && ($shipments[$__id]['carrier'] ?? '') === 'spx'): ?>
+                    <a class="ot-view ot-print" href="<?= e(url($base . '/orders/' . $__id . '/shipment/waybill')) ?>" target="_blank" rel="noopener">Print SPX waybill</a>
+                <?php elseif ($o['status'] === 'processing' && isset($shipments[$__id])): ?>
                     <a class="ot-view ot-print" href="<?= e(url($__viewUrl . '/shipment/awb?print=1')) ?>" target="_blank" rel="noopener">Print AWB</a>
                 <?php endif; ?>
                 <?php if ($o['status'] !== 'cancelled'): ?>

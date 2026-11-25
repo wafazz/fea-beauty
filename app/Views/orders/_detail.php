@@ -110,7 +110,8 @@ if ($digitalItems !== [] && !$showCost): // the buyer's view: downloads and keys
 
 <?php $__ship = \App\Services\ShipmentService::active((int) $order['id']); if ($__ship && $order['status'] !== 'cancelled'): ?>
 <h3>Shipment</h3>
-<p><?= ($__ship['carrier'] ?? '') === 'jnt' ? 'J&amp;T Express' : 'NinjaVan' ?> tracking number <strong><?= e($__ship['tracking_number']) ?></strong> · <?= e($__ship['status']) ?></p>
+<?php $__courier = ($__ship['source'] ?? 'api') === 'manual' ? \App\Services\ManualShipmentService::courierName($__ship['carrier']) : (['jnt' => 'J&T Express', 'spx' => 'SPX Express'][$__ship['carrier'] ?? ''] ?? 'NinjaVan'); ?>
+<p><?= e($__courier) ?> tracking number <strong><?= e($__ship['tracking_number']) ?></strong> · <?= e($__ship['status']) ?><?php if (!empty($__ship['tracking_url'])): ?> · <a href="<?= e($__ship['tracking_url']) ?>" target="_blank" rel="noopener noreferrer">Track parcel</a><?php endif; ?></p>
 <?php endif; ?>
 
 <h3>History</h3>
