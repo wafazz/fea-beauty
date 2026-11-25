@@ -193,7 +193,7 @@ final class Backup
         if ($zip->open($file, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
             throw new \RuntimeException('The files backup cannot be written.');
         }
-        foreach (['public/uploads', 'storage/receipts', 'storage/digital'] as $folder) { // digital files are sold goods: back them up too
+        foreach (['public/uploads', 'storage/receipts', 'storage/digital', 'storage/awb'] as $folder) { // digital files are sold goods: back them up too; AWB files are courier paperwork
             $root = BASE_PATH . '/' . $folder;
             if (!is_dir($root)) {
                 continue;

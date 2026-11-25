@@ -11,6 +11,7 @@ use App\Services\AddressService;
 use App\Services\JntExpressSettings;
 use App\Services\OrderService;
 use App\Services\ReceiptService;
+use App\Services\SpxExpressSettings;
 use App\Services\Shipping\NinjaVanGateway;
 use App\Services\ShipmentService;
 use App\Services\Payment\Payments;
@@ -78,6 +79,7 @@ final class OrderController extends ManageController
             'shipments' => ShipmentService::activeAmong(array_column($rows, 'id')),
             'canUpdate' => Auth::can('orders.update'),
             'jntOn' => JntExpressSettings::enabled(),
+            'spxOn' => SpxExpressSettings::enabled(),
             'scripts' => ['order-proofs.js', 'order-edit.js', 'order-details.js', 'order-bulk.js'],
             'receiptCount' => ReceiptService::pendingCount(),
             'statuses' => array_keys(OrderService::FLOW),

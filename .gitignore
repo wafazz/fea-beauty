@@ -19,3 +19,5 @@ storage/backups/*
 storage/installed.lock
 storage/support/*
 !storage/support/.gitkeep
+storage/awb/*
+!storage/awb/.gitkeep

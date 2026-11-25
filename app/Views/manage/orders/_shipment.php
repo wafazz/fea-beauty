@@ -6,7 +6,43 @@ $f = fn(string $k, string $d = '') => old($k, $d);
 ?>
 <section id="shipping">
     <h2>Shipping · NinjaVan</h2>
-    <?php if ($shipment && ($shipment['carrier'] ?? '') === 'jnt'): ?>
+    <?php if ($shipment && ($shipment['source'] ?? 'api') === 'manual'): ?>
+        <p><strong><?= e($shipment['tracking_number']) ?></strong>
+            <span class="badge st-processing">Added manually</span>
+            <small class="muted"> · <?= e(\App\Services\ManualShipmentService::courierName($shipment['carrier'])) ?></small></p>
+        <p>
+            <?php if (!empty($shipment['tracking_url'])): ?>
+                <a class="btn secondary" href="<?= e($shipment['tracking_url']) ?>" target="_blank" rel="noopener noreferrer">Open tracking page</a>
+            <?php endif; ?>
+            <?php if (!empty($shipment['awb_file'])): ?>
+                <a class="btn secondary" href="<?= e(url($base . '/orders/' . (int) $order['id'] . '/shipment/manual-awb')) ?>" target="_blank" rel="noopener">View AWB (<?= e($shipment['awb_original_name'] ?? 'file') ?>)</a>
+            <?php endif; ?>
+        </p>
+        <?php if ($canUpdate): ?>
+            <form method="post" action="<?= e(url($base . '/orders/' . (int) $order['id'] . '/shipment/manual-awb')) ?>" class="card-form" enctype="multipart/form-data">
+                <?= csrf_field() ?>
+                <label><?= empty($shipment['awb_file']) ? 'Upload AWB' : 'Replace AWB' ?> (PDF, JPG or PNG, max 5 MB)
+                    <input type="file" name="awb" accept="application/pdf,image/jpeg,image/png" required><?= field_error('awb') ?></label>
+                <button class="btn secondary">Upload AWB</button>
+            </form>
+            <form method="post" action="<?= e(url($base . '/orders/' . (int) $order['id'] . '/shipment/cancel')) ?>" class="inline" data-swal-confirm="Remove this courier booking?" data-swal-text="Nothing is sent to the courier. Use this if the booking was wrong." data-swal-button="Yes, remove" data-swal-danger="1">
+                <?= csrf_field() ?><button class="btn secondary">Remove courier</button></form>
+        <?php endif; ?>
+    <?php elseif ($shipment && ($shipment['carrier'] ?? '') === 'spx'): ?>
+        <p><strong><?= e($shipment['tracking_number']) ?></strong>
+            <span class="badge st-processing"><?= e($shipment['status']) ?></span>
+            <small class="muted"> · SPX Express · <?= e($shipment['weight_kg']) ?> kg
+                <?= $shipment['pickup_required'] ? ' · SPX collects from your pickup address' : ' · drop-off by you' ?>
+                <?= $shipment['cod_amount'] !== null ? ' · collect ' . e(money($shipment['cod_amount'])) . ' (COD)' : '' ?></small></p>
+        <p>
+            <a class="btn secondary" href="<?= e(url($base . '/orders/' . (int) $order['id'] . '/shipment/waybill')) ?>" target="_blank" rel="noopener">Download SPX waybill (PDF)</a>
+            <?php if ($canUpdate): ?>
+                <form method="post" action="<?= e(url($base . '/orders/' . (int) $order['id'] . '/shipment/cancel')) ?>" class="inline" data-swal-confirm="Cancel this SPX Express shipment?" data-swal-text="Only parcels still waiting for pickup can be cancelled." data-swal-button="Yes, cancel shipment">
+                    <?= csrf_field() ?><button class="btn secondary">Cancel shipment</button></form>
+            <?php endif; ?>
+        </p>
+        <p><small class="muted">Live tracking updates for SPX are not wired yet. Check the status on SPX's tracking page using the tracking number above.</small></p>
+    <?php elseif ($shipment && ($shipment['carrier'] ?? '') === 'jnt'): ?>
         <p><strong><?= e($shipment['tracking_number']) ?></strong>
             <span class="badge st-processing"><?= e($shipment['status']) ?></span>
             <small class="muted"> · J&amp;T Express · <?= e($shipment['weight_kg']) ?> kg
@@ -65,6 +101,26 @@ $f = fn(string $k, string $d = '') => old($k, $d);
             <?php endif; ?>
             <button class="btn">Create NinjaVan shipment</button>
             <small class="muted">The customer's address and the items on this order are sent to NinjaVan. The pickup address comes from the NinjaVan settings.</small>
+        </form>
+    <?php endif; ?>
+    <?php if (!$shipment && $canUpdate && $order['status'] === 'processing'): ?>
+        <form method="post" action="<?= e(url($base . '/orders/' . (int) $order['id'] . '/shipment/manual')) ?>" class="card-form wide" enctype="multipart/form-data">
+            <?= csrf_field() ?>
+            <h3>Add courier manually</h3>
+            <p class="muted">Already booked the parcel with a courier yourself? Enter its tracking number here. Nothing is sent to the courier.</p>
+            <div class="grid2">
+                <label>Courier
+                    <select name="courier">
+                        <option value="">Choose a courier</option>
+                        <?php foreach (\App\Services\ManualShipmentService::COURIERS as $k => $label): ?>
+                            <option value="<?= e($k) ?>" <?= $f('courier') === $k ? 'selected' : '' ?>><?= e($label) ?></option>
+                        <?php endforeach; ?>
+                    </select><?= field_error('courier') ?></label>
+                <label>Tracking number <input name="tracking_number" value="<?= $f('tracking_number') ?>" maxlength="60" autocomplete="off" spellcheck="false"><?= field_error('tracking_number') ?></label>
+                <label>Tracking link (optional) <input type="url" name="tracking_url" value="<?= $f('tracking_url') ?>" maxlength="500" placeholder="https://" autocomplete="off"><?= field_error('tracking_url') ?></label>
+                <label>AWB file (optional, PDF, JPG or PNG, max 5 MB) <input type="file" name="awb" accept="application/pdf,image/jpeg,image/png"><?= field_error('awb') ?></label>
+            </div>
+            <button class="btn">Save courier</button>
         </form>
     <?php endif; ?>
     <?php $old = array_filter($shipHistory, fn($h) => !$h['active']); if ($old !== []): ?>
